@@ -20,6 +20,19 @@ export async function getCustomerByCedula(cedula: string) {
     return { customer: data }
 }
 
+export async function getCustomers() {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return []
+
+    const { data } = await supabase
+        .from("customers")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+    return data || []
+}
+
 export async function createCustomer(formData: FormData) {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
