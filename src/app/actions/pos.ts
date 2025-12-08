@@ -12,7 +12,7 @@ function getAdminDb() {
     )
 }
 
-export async function createOrder(data: {
+export async function createOrder({ items, total, paymentMethod, customerId }: {
     items: any[],
     total: number,
     paymentMethod: string,
