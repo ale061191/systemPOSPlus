@@ -41,13 +41,70 @@ import { useLanguage } from "@/providers/language-provider"
 export function ReportsClient() {
     const { t } = useLanguage()
     const [range, setRange] = useState<ReportRange>("today")
-    const [data, setData] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const [chartData, setChartData] = useState<any[]>([])
+    const [cashierData, setCashierData] = useState<any[]>([])
 
+    // Re-process data on client to align with User's Timezone
     useEffect(() => {
-        fetchReport()
-    }, [range])
+        if (!data?.rawOrders) return
+
+        const processedChart = new Map<string, number>()
+        const processedCashier = new Map<string, number>()
+        const now = new Date()
+
+        data.rawOrders.forEach((order: any) => {
+            const date = new Date(order.created_at)
+
+            // Filter Logic based on Local Time
+            // The server sends a bit of extra buffer due to UTC differences
+            let include = false
+            if (range === 'today') {
+                include = format(date, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd')
+            } else if (range === 'week') {
+                // Approximate check
+                include = true
+            } else {
+                include = true
+            }
+
+            if (include && order.status === 'COMPLETED') {
+                // Chart Aggregation
+                let label = ""
+                if (range === "today") {
+                    label = format(date, "HH:00")
+                } else if (range === "week") {
+                    label = format(date, "EEE")
+                } else {
+                    label = format(date, "dd MMM")
+                }
+
+                processedChart.set(label, (processedChart.get(label) || 0) + order.total_amount)
+
+                // Cashier Aggregation
+                const cashier = order.profiles?.full_name || "Unknown"
+                processedCashier.set(cashier, (processedCashier.get(cashier) || 0) + order.total_amount)
+            }
+        })
+
+        // Convert Map to Array
+        const trend = Array.from(processedChart.entries())
+            .map(([name, sales]) => ({ name, sales }))
+            // Sort by time if today
+            .sort((a, b) => {
+                if (range === 'today') return parseInt(a.name) - parseInt(b.name)
+                return 0 // Keep order for others or improve sort logic
+            })
+
+        // Cashier Array
+        const cashiers = Array.from(processedCashier.entries())
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+
+        setChartData(trend)
+        setCashierData(cashiers)
+
+    }, [data, range])
+
 
     async function fetchReport() {
         setLoading(true)
@@ -191,7 +248,7 @@ export function ReportsClient() {
                                 </CardHeader>
                                 <CardContent className="pl-2">
                                     <ResponsiveContainer width="100%" height={350}>
-                                        <AreaChart data={data.charts.salesTrend}>
+                                        <AreaChart data={chartData}>
                                             <defs>
                                                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
