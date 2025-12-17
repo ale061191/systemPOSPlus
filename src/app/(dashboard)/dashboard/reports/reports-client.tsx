@@ -41,11 +41,15 @@ import { useLanguage } from "@/providers/language-provider"
 export function ReportsClient() {
     const { t } = useLanguage()
     const [range, setRange] = useState<ReportRange>("today")
+    const [data, setData] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [chartData, setChartData] = useState<any[]>([])
     const [cashierData, setCashierData] = useState<any[]>([])
 
-    // Re-process data on client to align with User's Timezone
     useEffect(() => {
+        fetchReport()
+    }, [range])
         if (!data?.rawOrders) return
 
         const processedChart = new Map<string, number>()
