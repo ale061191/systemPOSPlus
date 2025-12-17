@@ -50,6 +50,8 @@ export function ReportsClient() {
     useEffect(() => {
         fetchReport()
     }, [range])
+    // Re-process data on client to align with User's Timezone
+    useEffect(() => {
         if (!data?.rawOrders) return
 
         const processedChart = new Map<string, number>()
