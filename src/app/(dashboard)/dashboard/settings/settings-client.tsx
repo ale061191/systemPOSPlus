@@ -212,6 +212,25 @@ export function SettingsClient() {
                         </CardContent>
                     </Card>
 
+                    {/* Language Settings */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Building2 className="h-5 w-5 text-purple-600" />
+                                Language Preferences
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <Label>Interface Language</Label>
+                                <LanguageSwitcher />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Select your preferred language for the interface.
+                            </p>
+                        </CardContent>
+                    </Card>
+
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
