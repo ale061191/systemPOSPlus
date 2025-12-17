@@ -69,3 +69,26 @@ export async function updateStoreSettings(formData: FormData) {
     revalidatePath("/dashboard") // Revalidate everything as logo is global
     return { success: true }
 }
+
+export async function deleteStoreLogo() {
+    const supabase = await createClient()
+
+    try {
+        await requireRole(["admin"])
+    } catch (e: any) {
+        return { error: "Unauthorized: Admins only" }
+    }
+
+    const { error } = await supabase
+        .from("store_settings")
+        .update({ logo_url: null, updated_at: new Date().toISOString() })
+        .eq("id", 1)
+
+    if (error) {
+        console.error("Delete logo error:", error)
+        return { error: error.message }
+    }
+
+    revalidatePath("/dashboard")
+    return { success: true }
+}

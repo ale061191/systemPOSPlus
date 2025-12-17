@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Save, Building2, Receipt, Percent, Upload, Image as ImageIcon } from "lucide-react"
+import { Save, Building2, Receipt, Percent, Upload, Image as ImageIcon, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,14 +9,25 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { LanguageSwitcher } from "@/components/dashboard/language-switcher"
-import { getStoreSettings, updateStoreSettings } from "@/app/actions/settings"
+import { getStoreSettings, updateStoreSettings, deleteStoreLogo } from "@/app/actions/settings"
 import { createClient } from "@/lib/supabase/client"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export function SettingsClient() {
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState(false)
     const [logoFile, setLogoFile] = useState<File | null>(null)
     const [logoPreview, setLogoPreview] = useState<string | null>(null)
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
     // Form State
     const [settings, setSettings] = useState({
@@ -55,6 +66,23 @@ export function SettingsClient() {
             const file = e.target.files[0]
             setLogoFile(file)
             setLogoPreview(URL.createObjectURL(file))
+        }
+    }
+
+    const handleRemoveLogo = async () => {
+        setIsLoading(true)
+        const result = await deleteStoreLogo()
+        setIsLoading(false)
+        setIsDeleteDialogOpen(false)
+
+        if (result.error) {
+            toast({ variant: "destructive", title: "Error", description: result.error })
+        } else {
+            toast({ title: "Logo Removed", description: "The business logo has been deleted." })
+            setLogoPreview(null)
+            setLogoFile(null)
+            setSettings(prev => ({ ...prev, logoUrl: "" }))
+            window.location.reload()
         }
     }
 
@@ -126,19 +154,33 @@ export function SettingsClient() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
-                        <div className="relative w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors">
-                            {logoPreview ? (
-                                <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <Upload className="h-8 w-8 text-gray-400" />
+                        <div className="relative group">
+                            <div className="relative w-32 h-32 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors">
+                                {logoPreview ? (
+                                    <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Upload className="h-8 w-8 text-gray-400" />
+                                )}
+                                {/* Use native input for overlay to avoid shadcn styles interfering with absolute positioning */}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                    onChange={handleLogoChange}
+                                />
+                            </div>
+
+                            {/* Delete Button - Only visible if logo exists */}
+                            {logoPreview && (
+                                <Button
+                                    size="icon"
+                                    variant="destructive"
+                                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full shadow-md z-20"
+                                    onClick={() => setIsDeleteDialogOpen(true)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
                             )}
-                            {/* Use native input for overlay to avoid shadcn styles interfering with absolute positioning */}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                onChange={handleLogoChange}
-                            />
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
                             Click to upload. PNG or JPG recommended.
@@ -270,6 +312,23 @@ export function SettingsClient() {
                     )}
                 </Button>
             </div>
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Business Logo?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to remove the current logo? This will revert to the default placeholder for all users.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRemoveLogo} className="bg-red-600 hover:bg-red-700">
+                            Remove Logo
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
