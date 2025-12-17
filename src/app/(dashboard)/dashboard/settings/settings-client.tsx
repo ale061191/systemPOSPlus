@@ -132,10 +132,11 @@ export function SettingsClient() {
                             ) : (
                                 <Upload className="h-8 w-8 text-gray-400" />
                             )}
-                            <Input
+                            {/* Use native input for overlay to avoid shadcn styles interfering with absolute positioning */}
+                            <input
                                 type="file"
                                 accept="image/*"
-                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                 onChange={handleLogoChange}
                             />
                         </div>
