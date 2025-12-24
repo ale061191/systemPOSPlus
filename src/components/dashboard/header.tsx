@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Bell, Moon, Sun, Menu } from "lucide-react"
+import { Search, Bell, Moon, Sun, Menu, DollarSign } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DateTimeDisplay } from "@/components/dashboard/date-time-display"
 import { GlobalSearch } from "@/components/dashboard/global-search"
@@ -20,11 +20,16 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getStoreSettings } from "@/app/actions/settings"
+import { useCurrency } from "@/providers/currency-provider"
+import { Badge } from "@/components/ui/badge"
 
 export function Header({ role }: { role?: string }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
     const router = useRouter()
+
+    // Global Currency Context
+    const { currency, exchangeRate, toggleCurrency } = useCurrency()
 
     useEffect(() => {
         async function loadLogo() {
@@ -64,6 +69,21 @@ export function Header({ role }: { role?: string }) {
             </div>
 
             <div className="flex items-center gap-4">
+                {/* Currency Toggle */}
+                <Button
+                    variant={currency === "USD" ? "outline" : "default"}
+                    onClick={toggleCurrency}
+                    className={`gap-2 h-9 px-3 transition-colors ${currency === "VES" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
+                >
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold text-xs">{currency}</span>
+                    {currency === "VES" && exchangeRate > 0 && (
+                        <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-white/20">
+                            ~{exchangeRate.toFixed(2)}
+                        </span>
+                    )}
+                </Button>
+
                 <DateTimeDisplay />
                 <Button variant="ghost" size="icon" className="text-muted-foreground">
                     <Bell className="h-5 w-5" />

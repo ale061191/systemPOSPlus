@@ -37,9 +37,11 @@ import { getSalesReport, ReportRange } from "@/app/actions/reports"
 import * as XLSX from "xlsx"
 
 import { useLanguage } from "@/providers/language-provider"
+import { useCurrency } from "@/providers/currency-provider"
 
 export function ReportsClient() {
     const { t } = useLanguage()
+    const { formatCurrency } = useCurrency()
     const [range, setRange] = useState<ReportRange>("today")
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
@@ -209,7 +211,7 @@ export function ReportsClient() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold text-emerald-600">
-                                        ${data.metrics.totalSales.toFixed(2)}
+                                        {formatCurrency(data.metrics.totalSales)}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         {range === 'today' ? t.today : range === 'week' ? t.week : t.month}
@@ -237,7 +239,7 @@ export function ReportsClient() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">
-                                        ${data.metrics.averageTicket.toFixed(2)}
+                                        {formatCurrency(data.metrics.averageTicket)}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Revenue per order
@@ -262,7 +264,7 @@ export function ReportsClient() {
                                                 </linearGradient>
                                             </defs>
                                             <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${formatCurrency(value)}`} />
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <Tooltip />
                                             <Area type="monotone" dataKey="sales" stroke="#10b981" fillOpacity={1} fill="url(#colorSales)" />
@@ -338,7 +340,7 @@ export function ReportsClient() {
                                                             </Badge>
                                                         </TableCell>
                                                         <TableCell className="text-right font-medium text-emerald-600">
-                                                            ${order.total_amount.toFixed(2)}
+                                                            {formatCurrency(order.total_amount)}
                                                         </TableCell>
                                                     </TableRow>
                                                 ))

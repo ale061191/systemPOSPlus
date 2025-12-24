@@ -36,9 +36,11 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { updateOrderStatus, getOrderDetails } from "@/app/actions/orders"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
+import { useCurrency } from "@/providers/currency-provider"
 
 export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
     const { toast } = useToast()
+    const { formatCurrency } = useCurrency()
     const [orders, setOrders] = useState(initialOrders)
     const [statusFilter, setStatusFilter] = useState("ALL")
     const [searchTerm, setSearchTerm] = useState("")
@@ -108,8 +110,8 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                                     key={status}
                                     onClick={() => setStatusFilter(status)}
                                     className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-all ${statusFilter === status
-                                            ? "bg-background text-foreground shadow-sm"
-                                            : "text-muted-foreground hover:text-foreground"
+                                        ? "bg-background text-foreground shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground"
                                         }`}
                                 >
                                     {status.charAt(0) + status.slice(1).toLowerCase()}
@@ -165,7 +167,7 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                                                 {order.status}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="font-bold">${Number(order.total_amount).toFixed(2)}</TableCell>
+                                        <TableCell className="font-bold">{formatCurrency(Number(order.total_amount))}</TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -272,12 +274,12 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                                                     <div>
                                                         <p className="text-sm font-medium">{item.products?.name || "Unknown Product"}</p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            {item.quantity} x ${item.unit_price.toFixed(2)}
+                                                            {item.quantity} x {formatCurrency(item.unit_price)}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <p className="text-sm font-bold">
-                                                    ${(item.quantity * item.unit_price).toFixed(2)}
+                                                    {formatCurrency(item.quantity * item.unit_price)}
                                                 </p>
                                             </div>
                                         ))}
@@ -291,15 +293,15 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Subtotal</span>
-                                    <span>${Number(selectedOrder.total_amount).toFixed(2)}</span>
+                                    <span>{formatCurrency(Number(selectedOrder.total_amount))}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Tax</span>
-                                    <span>$0.00</span>
+                                    <span>{formatCurrency(0)}</span>
                                 </div>
                                 <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                                     <span>Total</span>
-                                    <span>${Number(selectedOrder.total_amount).toFixed(2)}</span>
+                                    <span>{formatCurrency(Number(selectedOrder.total_amount))}</span>
                                 </div>
                                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                                     <span>Payment Method</span>

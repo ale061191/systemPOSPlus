@@ -10,12 +10,15 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { DollarSign, ShoppingCart, RefreshCcw, CalendarCheck, AlertTriangle } from "lucide-react"
+import { DollarSign, ShoppingCart, RefreshCcw, CalendarCheck, AlertTriangle, AlertOctagon, CheckCircle } from "lucide-react"
 import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { useLanguage } from "@/providers/language-provider"
+import { useCurrency } from "@/providers/currency-provider"
+import { StockDetailsDialog } from "@/components/dashboard/stock-details-dialog"
 
 export function DashboardClient({ stats }: { stats: any }) {
     const { t } = useLanguage()
+    const { formatCurrency } = useCurrency()
 
     // Safety checks
     const chartData = stats?.chartData || []
@@ -40,7 +43,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${totalSales.toFixed(2)}</div>
+                        <div className="text-2xl font-bold">{formatCurrency(totalSales)}</div>
                         <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                     </CardContent>
                 </Card>
@@ -74,20 +77,68 @@ export function DashboardClient({ stats }: { stats: any }) {
                 </Card>
 
                 {/* Low Stock Alerts (Replaces Reservations) */}
-                <Card className={stats?.lowStockCount && stats.lowStockCount > 0 ? "border-orange-500/50 bg-orange-50/10" : ""}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t.low_stock}</CardTitle>
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${stats?.lowStockCount && stats.lowStockCount > 0 ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600"}`}>
-                            {stats?.lowStockCount && stats.lowStockCount > 0 ? <AlertTriangle className="h-4 w-4" /> : <CalendarCheck className="h-4 w-4" />}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${stats?.lowStockCount && stats.lowStockCount > 0 ? "text-orange-600" : ""}`}>
-                            {stats?.lowStockCount || 0}
-                        </div>
-                        <p className="text-xs text-muted-foreground">Products with stock ≤ 40</p>
-                    </CardContent>
-                </Card>
+                {/* Low Stock Alerts (Traffic Light System) */}
+                <StockDetailsDialog
+                    lowStockProducts={stats?.lowStockProducts || []}
+                    healthyProducts={stats?.healthyProducts || []}
+                    totalProductsCount={stats?.totalProductsCount || 0}
+                >
+                    <Card className={`cursor-pointer hover:shadow-md transition-all ${(stats?.lowStockProducts?.filter((p: any) => p.stock <= 20).length || 0) > 0
+                        ? "border-red-500/50 bg-red-50/10"
+                        : (stats?.lowStockProducts?.length || 0) > 0
+                            ? "border-orange-500/50 bg-orange-50/10"
+                            : "border-emerald-500/50 bg-emerald-50/10"
+                        }`}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t.low_stock}</CardTitle>
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center ${(stats?.lowStockProducts?.filter((p: any) => p.stock <= 20).length || 0) > 0
+                                ? "bg-red-100 text-red-600"
+                                : (stats?.lowStockProducts?.length || 0) > 0
+                                    ? "bg-orange-100 text-orange-600"
+                                    : "bg-emerald-100 text-emerald-600"
+                                }`}>
+                                {
+                                    (stats?.lowStockProducts?.filter((p: any) => p.stock <= 20).length || 0) > 0
+                                        ? <AlertOctagon className="h-4 w-4" />
+                                        : (stats?.lowStockProducts?.length || 0) > 0
+                                            ? <AlertTriangle className="h-4 w-4" />
+                                            : <CheckCircle className="h-4 w-4" />
+                                }
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {(stats?.lowStockProducts?.length || 0) > 0 ? (
+                                    <>
+                                        {stats.lowStockProducts.slice(0, 3).map((product: any) => (
+                                            <div key={product.id} className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`h-2 w-2 rounded-full ${product.stock <= 20 ? "bg-red-500" : "bg-orange-500"}`} />
+                                                    <span className="font-medium truncate max-w-[120px]" title={product.name}>
+                                                        {product.name}
+                                                    </span>
+                                                </div>
+                                                <span className={`font-bold ${product.stock <= 20 ? "text-red-600" : "text-orange-600"}`}>
+                                                    {product.stock}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {stats.lowStockProducts.length > 3 && (
+                                            <p className="text-xs text-center text-muted-foreground pt-1">
+                                                + {stats.lowStockProducts.length - 3} more items
+                                            </p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-2 text-emerald-600">
+                                        <span className="text-2xl font-bold">OK</span>
+                                        <p className="text-xs text-muted-foreground">All inventory healthy</p>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </StockDetailsDialog>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -120,7 +171,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                                             </p>
                                         </div>
                                         <div className="ml-auto font-medium text-sm">
-                                            +${product.revenue.toFixed(2)}
+                                            +{formatCurrency(product.revenue)}
                                         </div>
                                     </div>
                                 ))
@@ -168,7 +219,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                                                         order.status === "CANCELLED" ? t.cancelled : t.pending}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-right">${Number(order.total_amount).toFixed(2)}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(Number(order.total_amount))}</TableCell>
                                         </TableRow>
                                     ))
                                 )}

@@ -51,8 +51,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useCurrency } from "@/providers/currency-provider"
 
 export function CustomersClient({ initialCustomers, currentUserRole }: { initialCustomers: any[], currentUserRole: string | null }) {
+    const { formatCurrency } = useCurrency()
     const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -236,7 +238,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                                 <span className="text-muted-foreground">{customer.email}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>${Number(customer.total_spent || 0).toFixed(2)}</TableCell>
+                                        <TableCell>{formatCurrency(Number(customer.total_spent || 0))}</TableCell>
                                         <TableCell>{customer.notes}</TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
@@ -298,13 +300,13 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                 <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
                                     <p className="text-xs text-muted-foreground uppercase font-bold">Total Spent</p>
                                     <p className="text-2xl font-bold text-emerald-700">
-                                        ${customerStats.stats?.totalSpent.toFixed(2)}
+                                        {formatCurrency(customerStats.stats?.totalSpent)}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                                     <p className="text-xs text-muted-foreground uppercase font-bold">Average Order</p>
                                     <p className="text-2xl font-bold text-blue-700">
-                                        ${customerStats.stats?.averageOrderValue.toFixed(2)}
+                                        {formatCurrency(customerStats.stats?.averageOrderValue)}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
@@ -352,7 +354,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                                     </div>
                                                 </div>
                                                 <span className="font-bold text-sm bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                                                    ${product.spent.toFixed(2)}
+                                                    {formatCurrency(product.spent)}
                                                 </span>
                                             </div>
                                         ))
@@ -376,7 +378,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                                     </p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-bold text-emerald-600">${order.total_amount.toFixed(2)}</p>
+                                                    <p className="font-bold text-emerald-600">{formatCurrency(order.total_amount)}</p>
                                                     <Badge variant="outline" className="text-[10px] h-5">{order.payment_method}</Badge>
                                                 </div>
                                             </div>

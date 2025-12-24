@@ -1,0 +1,182 @@
+"use client"
+
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
+import { AlertOctagon, AlertTriangle, CheckCircle, Package } from "lucide-react"
+import Link from "next/link"
+import { useCurrency } from "@/providers/currency-provider"
+
+interface StockDetailsDialogProps {
+    children: React.ReactNode
+    lowStockProducts: any[]
+    healthyProducts: any[]
+    totalProductsCount: number
+}
+
+export function StockDetailsDialog({ children, lowStockProducts, healthyProducts, totalProductsCount }: StockDetailsDialogProps) {
+    const { formatCurrency } = useCurrency()
+
+    // 1. Filter Logic
+    const criticalItems = lowStockProducts.filter(p => p.stock <= 20)
+    const warningItems = lowStockProducts.filter(p => p.stock > 20 && p.stock <= 40)
+    // const healthyCount = Math.max(0, totalProductsCount - lowStockProducts.length)
+    // We now have the actual list!
+    const healthyItems = healthyProducts || []
+    const healthyCount = healthyItems.length
+
+    // 2. Determine default tab (Prioritize worst status)
+    const defaultTab = criticalItems.length > 0 ? "critical" : (warningItems.length > 0 ? "warning" : "healthy")
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                {children}
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                    <DialogTitle>Stock Status Details</DialogTitle>
+                    <DialogDescription>
+                        Overview of your inventory health alerts.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <Tabs defaultValue={defaultTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="critical" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+                            <AlertOctagon className="mr-2 h-4 w-4" />
+                            Critical ({criticalItems.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="warning" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+                            <AlertTriangle className="mr-2 h-4 w-4" />
+                            Warning ({warningItems.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="healthy" className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-700">
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Healthy ({healthyCount})
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* CRITICAL TAB */}
+                    <TabsContent value="critical">
+                        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                            {criticalItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                    <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
+                                    <p>No critical items!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {criticalItems.map((product) => (
+                                        <div key={product.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
+                                                    {product.image_url ? (
+                                                        <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <Package className="h-5 w-5 text-muted-foreground" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{product.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{formatCurrency(product.price || product.selling_price)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    Stock: {product.stock}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </TabsContent>
+
+                    {/* WARNING TAB */}
+                    <TabsContent value="warning">
+                        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                            {warningItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                    <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
+                                    <p>No items in warning state.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {warningItems.map((product) => (
+                                        <div key={product.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
+                                                    {product.image_url ? (
+                                                        <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <Package className="h-5 w-5 text-muted-foreground" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{product.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{formatCurrency(product.price || product.selling_price)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                    Stock: {product.stock}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </TabsContent>
+
+                    {/* HEALTHY TAB */}
+                    <TabsContent value="healthy">
+                        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                            {healthyItems.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                    <AlertTriangle className="h-10 w-10 mb-2 text-yellow-500" />
+                                    <p>No healthy items found.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {healthyItems.map((product) => (
+                                        <div key={product.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
+                                                    {product.image_url ? (
+                                                        <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <Package className="h-5 w-5 text-muted-foreground" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{product.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{formatCurrency(product.price || product.selling_price)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                    Stock: {product.stock}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </TabsContent>
+                </Tabs>
+            </DialogContent>
+        </Dialog>
+    )
+}

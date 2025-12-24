@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, MoreHorizontal, Pencil, Trash, FileImage } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,6 +49,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useCurrency } from "@/providers/currency-provider"
 
 export function ProductsClient({ initialProducts, categories }: { initialProducts: any[], categories: any[] }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -56,13 +57,34 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
     const [editingProduct, setEditingProduct] = useState<any>(null)
     const [deleteId, setDeleteId] = useState<string | null>(null)
 
+    // New state for currency conversion
+    const [exchangeRate, setExchangeRate] = useState<number>(0)
+    const [price, setPrice] = useState<number>(0)
+
+    const { formatCurrency } = useCurrency()
+
+    // Fetch exchange rate on mount
+    useEffect(() => {
+        fetch("/api/bcv-rates")
+            .then(res => res.json())
+            .then(data => {
+                // The API returns an object like { dollar: 45.50, date: "..." }
+                if (data && data.dollar) {
+                    setExchangeRate(data.dollar)
+                }
+            })
+            .catch(err => console.error("Failed to fetch exchange rate:", err))
+    }, [])
+
     function handleEdit(product: any) {
         setEditingProduct(product)
+        setPrice(product.price) // Initialize price state for editing
         setIsOpen(true)
     }
 
     function openNew() {
         setEditingProduct(null)
+        setPrice(0)
         setIsOpen(true)
     }
 
@@ -238,7 +260,7 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
-                                    <TableCell>${p.price.toFixed(2)}</TableCell>
+                                    <TableCell>{formatCurrency(p.price)}</TableCell>
                                     <TableCell>
                                         <Badge variant={p.stock > 10 ? "secondary" : "destructive"}>
                                             {p.stock}

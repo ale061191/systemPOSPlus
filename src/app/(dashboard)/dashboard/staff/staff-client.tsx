@@ -39,8 +39,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useCurrency } from "@/providers/currency-provider"
 
 export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: any[], currentUserRole: string | null }) {
+    const { formatCurrency } = useCurrency()
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -251,7 +253,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                 <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
                                     <p className="text-xs text-muted-foreground uppercase font-bold">Total Sales</p>
                                     <p className="text-2xl font-bold text-emerald-700">
-                                        ${staffStats.stats?.totalSales.toFixed(2)}
+                                        {formatCurrency(staffStats.stats?.totalSales)}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
@@ -263,7 +265,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                 <div className="p-4 bg-purple-50 rounded-lg border border-purple-100 col-span-2">
                                     <p className="text-xs text-muted-foreground uppercase font-bold">Avg. Ticket Value</p>
                                     <p className="text-2xl font-bold text-purple-700">
-                                        ${staffStats.stats?.averageTicket.toFixed(2)}
+                                        {formatCurrency(staffStats.stats?.averageTicket)}
                                     </p>
                                 </div>
                             </div>
@@ -285,7 +287,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-xs text-muted-foreground block">{p.count} units</span>
-                                                    <span className="font-bold text-sm text-emerald-600">${p.sales.toFixed(2)}</span>
+                                                    <span className="font-bold text-sm text-emerald-600">{formatCurrency(p.sales)}</span>
                                                 </div>
                                             </div>
                                         ))
@@ -312,7 +314,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="font-bold text-emerald-600">${order.total_amount.toFixed(2)}</p>
+                                                        <p className="font-bold text-emerald-600">{formatCurrency(order.total_amount)}</p>
                                                         <Badge variant="outline" className="text-[10px] h-5">{order.payment_method}</Badge>
                                                     </div>
                                                 </div>

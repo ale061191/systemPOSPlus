@@ -22,10 +22,12 @@ import { cn } from "@/lib/utils"
 import { useOffline } from "@/providers/offline-context"
 import { useCart } from "@/providers/cart-context"
 import { CheckoutSuccess } from "@/components/pos/checkout-success"
+import { useCurrency } from "@/providers/currency-provider"
 
 export function POSInterface({ initialProducts, categories }: { initialProducts: any[], categories: any[] }) {
     const { toast } = useToast()
     const { cart, addToCart, updateQuantity, clearCart, cartTotal } = useCart()
+    const { formatCurrency } = useCurrency()
 
     const [searchTerm, setSearchTerm] = useState("")
     const [activeCategory, setActiveCategory] = useState<string>("all")
@@ -111,8 +113,6 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
             paymentMethod,
             customerId: customer?.id
         })
-
-        // ... rest of checking logic
 
         setIsProcessing(false)
         if (result.error) {
@@ -212,7 +212,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                 <div className="p-3 flex flex-col flex-1">
                                     <h3 className="font-semibold text-sm line-clamp-2 leading-tight mb-1">{product.name}</h3>
                                     <div className="mt-auto flex items-center justify-between">
-                                        <span className="font-bold text-emerald-700">${product.price.toFixed(2)}</span>
+                                        <span className="font-bold text-emerald-700">{formatCurrency(product.price)}</span>
                                         <span className="text-xs text-muted-foreground">{product.stock} items</span>
                                     </div>
                                 </div>
@@ -249,7 +249,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                 <div className="flex-1 flex flex-col justify-between">
                                     <div className="flex justify-between items-start">
                                         <p className="font-medium text-sm line-clamp-1">{item.name}</p>
-                                        <p className="font-bold text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+                                        <p className="font-bold text-sm">{formatCurrency(item.price * item.quantity)}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="flex items-center gap-1 bg-muted rounded-md border">
@@ -261,7 +261,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                                 <Plus className="h-3 w-3" />
                                             </button>
                                         </div>
-                                        <span className="text-xs text-muted-foreground">@ ${item.price}</span>
+                                        <span className="text-xs text-muted-foreground">@ {formatCurrency(item.price)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -273,16 +273,16 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                             <span>Subtotal</span>
-                            <span>${cartTotal.toFixed(2)}</span>
+                            <span>{formatCurrency(cartTotal)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span>Tax ({taxRate}%)</span>
-                            <span>${taxAmount.toFixed(2)}</span>
+                            <span>{formatCurrency(taxAmount)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span>${finalTotal.toFixed(2)}</span>
+                            <span>{formatCurrency(finalTotal)}</span>
                         </div>
                     </div>
 
@@ -291,7 +291,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                         disabled={cart.length === 0}
                         onClick={() => setIsCheckoutOpen(true)}
                     >
-                        Checkout (${finalTotal.toFixed(2)})
+                        Checkout ({formatCurrency(finalTotal)})
                     </Button>
                 </div>
             </div>
@@ -330,7 +330,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                         <div className="flex justify-center p-4 bg-muted/30 rounded-lg">
                             <div className="text-center">
                                 <p className="text-sm text-muted-foreground">Total Amount</p>
-                                <p className="text-4xl font-bold text-emerald-600">${finalTotal.toFixed(2)}</p>
+                                <p className="text-4xl font-bold text-emerald-600">{formatCurrency(finalTotal)}</p>
                             </div>
                         </div>
 
