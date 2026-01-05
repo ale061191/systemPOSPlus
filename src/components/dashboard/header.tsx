@@ -52,7 +52,7 @@ export function Header({ role }: { role?: string }) {
         <header className="flex h-16 items-center gap-4 border-b bg-background px-6">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
+                    <Button variant="outline" size="icon" className="shrink-0 lg:hidden" suppressHydrationWarning>
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Toggle navigation menu</span>
                     </Button>
@@ -96,7 +96,7 @@ export function Header({ role }: { role?: string }) {
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full overflow-hidden border border-gray-200">
+                        <Button variant="secondary" size="icon" className="rounded-full overflow-hidden border border-gray-200" suppressHydrationWarning>
                             <Avatar>
                                 <AvatarImage src={logoUrl || "https://github.com/shadcn.png"} className="object-cover" />
                                 <AvatarFallback>POS</AvatarFallback>

@@ -40,8 +40,10 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useCurrency } from "@/providers/currency-provider"
+import { useLanguage } from "@/providers/language-provider"
 
 export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: any[], currentUserRole: string | null }) {
+    const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -97,47 +99,47 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
     return (
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold md:text-2xl">Staff Management</h1>
+                <h1 className="text-lg font-semibold md:text-2xl">{t.staff_management}</h1>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-emerald-600 hover:bg-emerald-700">
-                            <Plus className="mr-2 h-4 w-4" /> Add Staff
+                            <Plus className="mr-2 h-4 w-4" /> {t.add_staff}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Add New Staff Member</DialogTitle>
+                            <DialogTitle>{t.add_staff}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="fullName">Full Name</Label>
+                                <Label htmlFor="fullName">{t.full_name}</Label>
                                 <Input id="fullName" name="fullName" placeholder="John Doe" required />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{t.email}</Label>
                                 <Input id="email" name="email" type="email" placeholder="john@example.com" required />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="role">Role</Label>
+                                <Label htmlFor="role">{t.role}</Label>
                                 <Select name="role" defaultValue="cashier">
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select role" />
+                                        <SelectValue placeholder={t.select_role} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="cashier">Cashier</SelectItem>
-                                        <SelectItem value="manager">Manager</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="cashier">{t.cashier}</SelectItem>
+                                        <SelectItem value="manager">{t.manager}</SelectItem>
+                                        <SelectItem value="admin">{t.admin}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{t.password}</Label>
                                 <Input id="password" name="password" type="password" required placeholder="Min 6 chars" />
                             </div>
 
                             <Button type="submit" className="mt-4 bg-emerald-600" disabled={isLoading}>
                                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Create Account
+                                {t.create_account}
                             </Button>
                         </form>
                     </DialogContent>
@@ -146,23 +148,23 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Staff List</CardTitle>
+                    <CardTitle>{t.staff_list}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Created At</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t.name}</TableHead>
+                                <TableHead>{t.role}</TableHead>
+                                <TableHead>{t.date}</TableHead>
+                                <TableHead className="text-right">{t.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {initialStaff.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                                        No staff found. Create one above!
+                                        {t.no_staff_found}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -176,7 +178,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
                                                 {staff.full_name ? staff.full_name.substring(0, 2).toUpperCase() : '??'}
                                             </div>
-                                            {staff.full_name || "Unknown"}
+                                            {staff.full_name || t.unknown}
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant={staff.role === 'admin' ? "destructive" : "secondary"}>
@@ -189,18 +191,18 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                                                     {currentUserRole === 'admin' ? (
                                                         <DropdownMenuItem onSelect={() => setDeleteId(staff.id)} className="text-red-500">
-                                                            <Trash className="mr-2 h-4 w-4" /> Delete User
+                                                            <Trash className="mr-2 h-4 w-4" /> {t.delete_user}
                                                         </DropdownMenuItem>
                                                     ) : (
                                                         <DropdownMenuItem className="text-muted-foreground" disabled>
-                                                            <Shield className="mr-2 h-4 w-4" /> Admin Only
+                                                            <Shield className="mr-2 h-4 w-4" /> {t.admin_only}
                                                         </DropdownMenuItem>
                                                     )}
                                                 </DropdownMenuContent>
@@ -217,15 +219,15 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Staff Member?</AlertDialogTitle>
+                        <AlertDialogTitle>{t.delete_staff_confirm_title}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the user account. They will no longer be able to log in.
+                            {t.delete_staff_confirm_desc}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                            Delete Account
+                            {t.delete_account}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -238,32 +240,32 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                             {selectedStaff?.full_name}
                         </SheetTitle>
                         <SheetDescription>
-                            Performance & Sales History
+                            {t.performance_history}
                         </SheetDescription>
                     </SheetHeader>
 
                     {loadingStats ? (
                         <div className="flex items-center justify-center h-48">
-                            <p className="text-muted-foreground animate-pulse">Calculating bonuses...</p>
+                            <p className="text-muted-foreground animate-pulse">{t.calculating}</p>
                         </div>
                     ) : staffStats ? (
                         <div className="space-y-6">
                             {/* Key Metrics */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Total Sales</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.total_sales}</p>
                                     <p className="text-2xl font-bold text-emerald-700">
                                         {formatCurrency(staffStats.stats?.totalSales)}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Tickets (Orders)</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.tickets_orders}</p>
                                     <p className="text-2xl font-bold text-blue-700">
                                         {staffStats.stats?.orderCount}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-purple-50 rounded-lg border border-purple-100 col-span-2">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Avg. Ticket Value</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.avg_ticket_value}</p>
                                     <p className="text-2xl font-bold text-purple-700">
                                         {formatCurrency(staffStats.stats?.averageTicket)}
                                     </p>
@@ -274,10 +276,10 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
 
                             {/* Top Products */}
                             <div>
-                                <h3 className="text-lg font-semibold mb-3">Top Selling Products</h3>
+                                <h3 className="text-lg font-semibold mb-3">{t.top_selling_products}</h3>
                                 <div className="space-y-2">
                                     {staffStats.stats?.topProducts?.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">No sales data recorded yet.</p>
+                                        <p className="text-sm text-muted-foreground">{t.no_sales_data}</p>
                                     ) : (
                                         staffStats.stats?.topProducts?.map((p: any, i: number) => (
                                             <div key={i} className="flex justify-between items-center p-2 rounded bg-muted/30">
@@ -286,7 +288,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                                     <span className="font-medium text-sm">{p.name}</span>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="text-xs text-muted-foreground block">{p.count} units</span>
+                                                    <span className="text-xs text-muted-foreground block">{p.count} {t.units}</span>
                                                     <span className="font-bold text-sm text-emerald-600">{formatCurrency(p.sales)}</span>
                                                 </div>
                                             </div>
@@ -299,11 +301,11 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
 
                             {/* Recent Sales History */}
                             <div>
-                                <h3 className="text-lg font-semibold mb-3">Recent Transactions</h3>
+                                <h3 className="text-lg font-semibold mb-3">{t.recent_transactions}</h3>
                                 <ScrollArea className="h-[250px] rounded-md border p-2">
                                     <div className="space-y-2">
                                         {staffStats.history?.length === 0 ? (
-                                            <p className="text-sm text-center py-4 text-muted-foreground">No recent transactions.</p>
+                                            <p className="text-sm text-center py-4 text-muted-foreground">{t.no_recent_transactions}</p>
                                         ) : (
                                             staffStats.history?.map((order: any) => (
                                                 <div key={order.id} className="flex items-center justify-between p-2 border-b last:border-0 hover:bg-muted/50">

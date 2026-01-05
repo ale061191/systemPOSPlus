@@ -21,8 +21,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useLanguage } from "@/providers/language-provider"
 
 export function SettingsClient() {
+    const { t } = useLanguage()
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState(false)
     const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -147,10 +149,10 @@ export function SettingsClient() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <ImageIcon className="h-5 w-5 text-indigo-600" />
-                            Business Logo
+                            {t.business_logo}
                         </CardTitle>
                         <CardDescription>
-                            Displayed in the header and receipts.
+                            {t.logo_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col items-center gap-4">
@@ -183,7 +185,7 @@ export function SettingsClient() {
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
-                            Click to upload. PNG or JPG recommended.
+                            {t.click_to_upload}
                         </p>
                     </CardContent>
                 </Card>
@@ -193,15 +195,15 @@ export function SettingsClient() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Building2 className="h-5 w-5 text-emerald-600" />
-                            Store Information
+                            {t.store_info}
                         </CardTitle>
                         <CardDescription>
-                            General business details.
+                            {t.store_info} details.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="storeName">Store Name</Label>
+                            <Label htmlFor="storeName">{t.store_name}</Label>
                             <Input
                                 id="storeName"
                                 placeholder="e.g. HotPOS Café"
@@ -211,7 +213,7 @@ export function SettingsClient() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="address">Address</Label>
+                                <Label htmlFor="address">{t.address}</Label>
                                 <Input
                                     id="address"
                                     placeholder="City, Country"
@@ -220,7 +222,7 @@ export function SettingsClient() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="phone">Phone Number</Label>
+                                <Label htmlFor="phone">{t.phone}</Label>
                                 <Input
                                     id="phone"
                                     placeholder="+1 234 567"
@@ -238,12 +240,12 @@ export function SettingsClient() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Percent className="h-5 w-5 text-blue-600" />
-                                Tax Configuration
+                                {t.tax_configuration}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="tax">Default Tax Rate (%)</Label>
+                                <Label htmlFor="tax">{t.tax_rate}</Label>
                                 <Input
                                     id="tax"
                                     type="number"
@@ -260,16 +262,16 @@ export function SettingsClient() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Building2 className="h-5 w-5 text-purple-600" />
-                                Language Preferences
+                                {t.language_preferences}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <Label>Interface Language</Label>
+                                <Label>{t.interface_language}</Label>
                                 <LanguageSwitcher />
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Select your preferred language for the interface.
+                                {t.language}
                             </p>
                         </CardContent>
                     </Card>
@@ -278,15 +280,15 @@ export function SettingsClient() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Receipt className="h-5 w-5 text-orange-600" />
-                                Receipt Footer
+                                {t.receipt_footer}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="footer">Message</Label>
+                                <Label htmlFor="footer">{t.footer_message}</Label>
                                 <Textarea
                                     id="footer"
-                                    placeholder="Thank you for visiting!"
+                                    placeholder={t.receipt_footer_placeholder}
                                     className="resize-none h-24"
                                     value={settings.footerMessage}
                                     onChange={(e) => setSettings({ ...settings, footerMessage: e.target.value })}
@@ -307,7 +309,7 @@ export function SettingsClient() {
                     {isLoading ? "Saving..." : (
                         <>
                             <Save className="mr-2 h-4 w-4" />
-                            Save Configuration
+                            {t.save_settings}
                         </>
                     )}
                 </Button>
@@ -316,15 +318,15 @@ export function SettingsClient() {
             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Remove Business Logo?</AlertDialogTitle>
+                        <AlertDialogTitle>{t.remove_logo_confirm_title}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to remove the current logo? This will revert to the default placeholder for all users.
+                            {t.remove_logo_confirm_desc}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleRemoveLogo} className="bg-red-600 hover:bg-red-700">
-                            Remove Logo
+                            {t.remove_logo}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

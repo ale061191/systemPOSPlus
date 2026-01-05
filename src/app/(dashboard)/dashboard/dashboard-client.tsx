@@ -44,7 +44,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(totalSales)}</div>
-                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                        <p className="text-xs text-muted-foreground">+20.1% {t.from_last_month}</p>
                     </CardContent>
                 </Card>
 
@@ -58,7 +58,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalOrders}</div>
-                        <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+                        <p className="text-xs text-muted-foreground">+180.1% {t.from_last_month}</p>
                     </CardContent>
                 </Card>
 
@@ -72,7 +72,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats?.cancelledCount || 0}</div>
-                        <p className="text-xs text-muted-foreground">Orders Cancelled / Returned</p>
+                        <p className="text-xs text-muted-foreground">{t.sales_return}</p>
                     </CardContent>
                 </Card>
 
@@ -125,14 +125,14 @@ export function DashboardClient({ stats }: { stats: any }) {
                                         ))}
                                         {stats.lowStockProducts.length > 3 && (
                                             <p className="text-xs text-center text-muted-foreground pt-1">
-                                                + {stats.lowStockProducts.length - 3} more items
+                                                + {stats.lowStockProducts.length - 3} {t.more_items}
                                             </p>
                                         )}
                                     </>
                                 ) : (
                                     <div className="flex flex-col items-center justify-center py-2 text-emerald-600">
-                                        <span className="text-2xl font-bold">OK</span>
-                                        <p className="text-xs text-muted-foreground">All inventory healthy</p>
+                                        <span className="text-2xl font-bold">{t.ok}</span>
+                                        <p className="text-xs text-muted-foreground">{t.inventory_healthy}</p>
                                     </div>
                                 )}
                             </div>
@@ -153,7 +153,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                     <CardContent>
                         <div className="space-y-4">
                             {stats?.topSelling?.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-8">No sales yet.</p>
+                                <p className="text-sm text-muted-foreground text-center py-8">{t.no_sales_yet}</p>
                             ) : (
                                 stats?.topSelling?.map((product: any, idx: number) => (
                                     <div key={idx} className="flex items-center">
@@ -167,7 +167,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                                         <div className="ml-4 space-y-1">
                                             <p className="text-sm font-medium leading-none">{product.name}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {product.count} sales
+                                                {product.count} {t.sales_count}
                                             </p>
                                         </div>
                                         <div className="ml-auto font-medium text-sm">
@@ -201,13 +201,13 @@ export function DashboardClient({ stats }: { stats: any }) {
                             <TableBody>
                                 {recentOrders.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24">No orders yet.</TableCell>
+                                        <TableCell colSpan={5} className="text-center h-24">{t.recent_orders} {t.error}</TableCell>
                                     </TableRow>
                                 ) : (
                                     recentOrders.map((order: any) => (
                                         <TableRow key={order.id}>
                                             <TableCell className="font-medium">#{order.id.slice(0, 7)}</TableCell>
-                                            <TableCell>{order.customers?.full_name || "Walk-in"}</TableCell>
+                                            <TableCell>{order.customers?.full_name || t.walk_in}</TableCell>
                                             <TableCell>{order.payment_method}</TableCell>
                                             <TableCell>
                                                 <Badge className={

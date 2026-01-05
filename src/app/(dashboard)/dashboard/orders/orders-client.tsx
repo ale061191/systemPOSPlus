@@ -37,8 +37,11 @@ import { updateOrderStatus, getOrderDetails } from "@/app/actions/orders"
 import { useToast } from "@/hooks/use-toast"
 import { Separator } from "@/components/ui/separator"
 import { useCurrency } from "@/providers/currency-provider"
+import { OrderDetailsView } from "@/components/dashboard/order-details-view"
+import { useLanguage } from "@/providers/language-provider"
 
 export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
+    const { t } = useLanguage()
     const { toast } = useToast()
     const { formatCurrency } = useCurrency()
     const [orders, setOrders] = useState(initialOrders)
@@ -97,7 +100,7 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold md:text-2xl">Orders Management</h1>
+                <h1 className="text-lg font-semibold md:text-2xl">{t.orders_management}</h1>
             </div>
 
             <Card>
@@ -105,25 +108,32 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                     <div className="flex items-center gap-2">
                         {/* Filter Tabs */}
                         <div className="flex p-1 bg-muted rounded-md">
-                            {["ALL", "PENDING", "COMPLETED", "CANCELLED"].map(status => (
-                                <button
-                                    key={status}
-                                    onClick={() => setStatusFilter(status)}
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-all ${statusFilter === status
-                                        ? "bg-background text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground"
-                                        }`}
-                                >
-                                    {status.charAt(0) + status.slice(1).toLowerCase()}
-                                </button>
-                            ))}
+                            {["ALL", "PENDING", "COMPLETED", "CANCELLED"].map(status => {
+                                let label = t.all
+                                if (status === "PENDING") label = t.pending
+                                if (status === "COMPLETED") label = t.completed
+                                if (status === "CANCELLED") label = t.cancelled
+
+                                return (
+                                    <button
+                                        key={status}
+                                        onClick={() => setStatusFilter(status)}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-all ${statusFilter === status
+                                            ? "bg-background text-foreground shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                    >
+                                        {label}
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
                     <div className="relative w-full max-w-sm">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search order ID or customer..."
+                            placeholder={t.search_orders_placeholder}
                             className="pl-8"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,30 +144,34 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Order ID</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Total</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t.order_id}</TableHead>
+                                <TableHead>{t.date}</TableHead>
+                                <TableHead>{t.customer}</TableHead>
+                                <TableHead>{t.status}</TableHead>
+                                <TableHead>{t.total}</TableHead>
+                                <TableHead className="text-right">{t.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredOrders.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center h-24">
-                                        No orders found.
+                                        {t.no_orders_found}
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 filteredOrders.map((order) => (
-                                    <TableRow key={order.id}>
+                                    <TableRow
+                                        key={order.id}
+                                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                        onClick={() => onViewDetails(order)}
+                                    >
                                         <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}...</TableCell>
                                         <TableCell>{format(new Date(order.created_at), "MMM d, HH:mm")}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="font-medium">
-                                                    {order.customers?.full_name || "Guest"}
+                                                    {order.customers?.full_name || t.guest}
                                                 </span>
                                                 <span className="text-xs text-muted-foreground">{order.customers?.email}</span>
                                             </div>
@@ -170,28 +184,28 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
                                         <TableCell className="font-bold">{formatCurrency(Number(order.total_amount))}</TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
+                                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                                     <Button variant="ghost" className="h-8 w-8 p-0">
                                                         <span className="sr-only">Open menu</span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                    <DropdownMenuLabel>{t.actions}</DropdownMenuLabel>
                                                     <DropdownMenuItem onClick={() => onViewDetails(order)}>
-                                                        <Eye className="mr-2 h-4 w-4" /> View Details
+                                                        <Eye className="mr-2 h-4 w-4" /> {t.view_details}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuLabel>Update Status</DropdownMenuLabel>
+                                                    <DropdownMenuLabel>{t.update_status}</DropdownMenuLabel>
                                                     <DropdownMenuRadioGroup value={order.status} onValueChange={(val) => handleStatusChange(order.id, val)}>
                                                         <DropdownMenuRadioItem value="PENDING">
-                                                            <Clock className="mr-2 h-4 w-4 text-gray-500" /> Pending
+                                                            <Clock className="mr-2 h-4 w-4 text-gray-500" /> {t.pending}
                                                         </DropdownMenuRadioItem>
                                                         <DropdownMenuRadioItem value="COMPLETED">
-                                                            <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Completed
+                                                            <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> {t.completed}
                                                         </DropdownMenuRadioItem>
                                                         <DropdownMenuRadioItem value="CANCELLED">
-                                                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> Cancelled
+                                                            <XCircle className="mr-2 h-4 w-4 text-red-500" /> {t.cancelled}
                                                         </DropdownMenuRadioItem>
                                                     </DropdownMenuRadioGroup>
                                                 </DropdownMenuContent>
@@ -209,106 +223,17 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
             <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
                 <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
                     <SheetHeader className="mb-6">
-                        <SheetTitle>Order Details</SheetTitle>
+                        <SheetTitle>{t.view_details}</SheetTitle>
                         <SheetDescription>
-                            Transaction ID: {selectedOrder?.id}
+                            {t.transaction_id}: {selectedOrder?.id}
                         </SheetDescription>
                     </SheetHeader>
 
                     {isLoadingDetails ? (
-                        <div className="flex justify-center h-24 items-center">Loading...</div>
+                        <div className="flex justify-center h-24 items-center">{t.loading}</div>
                     ) : selectedOrder ? (
                         <div className="space-y-6">
-                            {/* Status and Meta */}
-                            <div className="flex items-center justify-between p-4 bg-muted/40 rounded-lg">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Status</p>
-                                    <Badge variant={getStatusColor(selectedOrder.status) as any} className="mt-1">
-                                        {selectedOrder.status}
-                                    </Badge>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-muted-foreground">Date</p>
-                                    <p className="font-medium">{format(new Date(selectedOrder.created_at), "PPP p")}</p>
-                                </div>
-                            </div>
-
-                            {/* Customer Info */}
-                            <div>
-                                <h3 className="text-sm font-semibold mb-2">Customer</h3>
-                                <div className="flex items-center gap-3 p-3 border rounded-md">
-                                    <div className="bg-primary/10 p-2 rounded-full">
-                                        {/* Icon or Avatar placeholder */}
-                                        <span className="font-bold text-primary">
-                                            {selectedOrder.customers?.full_name?.charAt(0) || "G"}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">{selectedOrder.customers?.full_name || "Guest User"}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {selectedOrder.customers?.cedula || "No ID"} • {selectedOrder.customers?.phone || "No Phone"}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Separator />
-
-                            {/* Items List */}
-                            <div>
-                                <h3 className="text-sm font-semibold mb-3">Items ({selectedOrder.order_items?.length})</h3>
-                                <ScrollArea className="h-[300px] pr-4">
-                                    <div className="space-y-3">
-                                        {selectedOrder.order_items?.map((item: any) => (
-                                            <div key={item.id} className="flex justify-between items-start">
-                                                <div className="flex gap-3">
-                                                    <div className="h-10 w-10 bg-muted rounded overflow-hidden flex-shrink-0">
-                                                        {item.products?.image_url ? (
-                                                            <img src={item.products.image_url} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                                                📦
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium">{item.products?.name || "Unknown Product"}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {item.quantity} x {formatCurrency(item.unit_price)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <p className="text-sm font-bold">
-                                                    {formatCurrency(item.quantity * item.unit_price)}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            </div>
-
-                            <Separator />
-
-                            {/* Totals */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Subtotal</span>
-                                    <span>{formatCurrency(Number(selectedOrder.total_amount))}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Tax</span>
-                                    <span>{formatCurrency(0)}</span>
-                                </div>
-                                <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
-                                    <span>Total</span>
-                                    <span>{formatCurrency(Number(selectedOrder.total_amount))}</span>
-                                </div>
-                                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                    <span>Payment Method</span>
-                                    <span className="uppercase">{selectedOrder.payment_method}</span>
-                                </div>
-                            </div>
-
+                            <OrderDetailsView order={selectedOrder} />
                         </div>
                     ) : null}
                 </SheetContent>

@@ -28,9 +28,77 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { updateStock } from "@/app/actions/inventory"
+import { updateStock, moveStockToStore } from "@/app/actions/inventory"
+import { PackagePlus } from "lucide-react"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { useLanguage } from "@/providers/language-provider"
+
+function RestockButton({ product }: { product: any }) {
+    const { t } = useLanguage()
+    const [isOpen, setIsOpen] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    async function handleRestock(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        setIsLoading(true)
+        const formData = new FormData(e.currentTarget)
+        const quantity = parseInt(formData.get("quantity") as string)
+
+        const result = await moveStockToStore(product.id, quantity)
+        setIsLoading(false)
+
+        if (result.error) {
+            alert(result.error)
+        } else {
+            setIsOpen(false)
+        }
+    }
+
+    return (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="secondary" size="sm" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
+                    <PackagePlus className="mr-2 h-4 w-4" />
+                    {t.restock}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+                <div className="grid gap-4">
+                    <div className="space-y-2">
+                        <h4 className="font-medium leading-none">{t.restock_from_warehouse}</h4>
+                        <p className="text-sm text-muted-foreground">
+                            {t.move_items_warehouse_store} (Warehouse: {product.stock_warehouse || 0})
+                        </p>
+                    </div>
+                    <form onSubmit={handleRestock} className="grid gap-2">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                            <Label htmlFor="quantity">{t.qty}</Label>
+                            <Input
+                                id="quantity"
+                                name="quantity"
+                                type="number"
+                                className="col-span-2 h-8"
+                                max={product.stock_warehouse || 0}
+                                min={1}
+                                required
+                            />
+                        </div>
+                        <Button type="submit" size="sm" disabled={isLoading || (product.stock_warehouse || 0) <= 0}>
+                            {t.move_to_store}
+                        </Button>
+                    </form>
+                </div>
+            </PopoverContent>
+        </Popover>
+    )
+}
 
 export function StockClient({ initialProducts }: { initialProducts: any[] }) {
+    const { t } = useLanguage()
     const [selectedProduct, setSelectedProduct] = useState<any>(null)
     const [isAdjustOpen, setIsAdjustOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
@@ -70,11 +138,24 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
             <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Adjust Stock: {selectedProduct?.name}</DialogTitle>
+                        <DialogTitle>{t.adjust_stock_title}: {selectedProduct?.name}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAdjustSubmit} className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="type">Movement Type</Label>
+                            <Label htmlFor="target">{t.target_limit}</Label>
+                            <Select name="target" defaultValue="store">
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="store">{t.store_sales_floor}</SelectItem>
+                                    <SelectItem value="warehouse">{t.warehouse_reserve}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="type">{t.movement_type}</Label>
                             <Select name="type" defaultValue="IN">
                                 <SelectTrigger>
                                     <SelectValue />
@@ -82,12 +163,12 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                                 <SelectContent>
                                     <SelectItem value="IN">
                                         <div className="flex items-center text-emerald-600">
-                                            <ArrowUp className="mr-2 h-4 w-4" /> Stock IN (Purchase/Return)
+                                            <ArrowUp className="mr-2 h-4 w-4" /> {t.stock_in}
                                         </div>
                                     </SelectItem>
                                     <SelectItem value="OUT">
                                         <div className="flex items-center text-red-600">
-                                            <ArrowDown className="mr-2 h-4 w-4" /> Stock OUT (Damage/Loss)
+                                            <ArrowDown className="mr-2 h-4 w-4" /> {t.stock_out}
                                         </div>
                                     </SelectItem>
                                 </SelectContent>
@@ -95,17 +176,17 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="quantity">Quantity</Label>
+                            <Label htmlFor="quantity">{t.quantity}</Label>
                             <Input id="quantity" name="quantity" type="number" min="1" required />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="reason">Reason / Notes</Label>
+                            <Label htmlFor="reason">{t.reason}</Label>
                             <Input id="reason" name="reason" placeholder="e.g. Broken item, New shipment" />
                         </div>
 
                         <Button type="submit" className="mt-4 bg-emerald-600" disabled={isLoading}>
-                            Confirm Adjustment
+                            {t.confirm_adjustment}
                         </Button>
                     </form>
                 </DialogContent>
@@ -117,7 +198,7 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search inventory..."
+                            placeholder={t.search_inventory}
                             className="pl-8"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -128,11 +209,10 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Product</TableHead>
-
-                                <TableHead>Current Stock</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Manage</TableHead>
+                                <TableHead>{t.product_name}</TableHead>
+                                <TableHead className="text-center">{t.store_stock}</TableHead>
+                                <TableHead className="text-center">{t.warehouse_stock}</TableHead>
+                                <TableHead className="text-right">{t.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -140,24 +220,36 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                                 <TableRow key={p.id}>
                                     <TableCell className="font-medium">{p.name}</TableCell>
 
-                                    <TableCell className="font-bold text-lg">{p.stock}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={p.stock > 10 ? "secondary" : p.stock > 0 ? "outline" : "destructive"}>
-                                            {p.stock > 10 ? "In Stock" : p.stock > 0 ? "Low Stock" : "Out of Stock"}
-                                        </Badge>
+                                    <TableCell className="text-center">
+                                        <div className="flex flex-col items-center">
+                                            <span className="font-bold text-lg">{p.stock}</span>
+                                            <Badge variant={p.stock > 10 ? "secondary" : p.stock > 0 ? "outline" : "destructive"} className="text-[10px] h-5 px-1">
+                                                {p.stock > 10 ? t.good : p.stock > 0 ? t.low : t.empty}
+                                            </Badge>
+                                        </div>
                                     </TableCell>
+
+                                    <TableCell className="text-center">
+                                        <div className="flex flex-col items-center justify-center">
+                                            <span className="font-bold text-lg text-muted-foreground">{p.stock_warehouse || 0}</span>
+                                        </div>
+                                    </TableCell>
+
                                     <TableCell className="text-right">
-                                        <Button variant="outline" size="sm" onClick={() => openAdjust(p)}>
-                                            <History className="mr-2 h-4 w-4" />
-                                            Adjust
-                                        </Button>
+                                        <div className="flex justify-end gap-2">
+                                            <RestockButton product={p} />
+                                            <Button variant="outline" size="sm" onClick={() => openAdjust(p)}>
+                                                <History className="mr-2 h-4 w-4" />
+                                                {t.adjust}
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
                             {filteredProducts.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center">
-                                        No products found matching your search.
+                                        {t.no_products_found}
                                     </TableCell>
                                 </TableRow>
                             )}

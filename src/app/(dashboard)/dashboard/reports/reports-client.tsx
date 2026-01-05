@@ -128,7 +128,7 @@ export function ReportsClient() {
             }
         } catch (e) {
             console.error("Unexpected error:", e)
-            setError("An unexpected error occurred while loading the report.")
+            setError(t.unexpected_error)
         }
         setLoading(false)
     }
@@ -138,13 +138,13 @@ export function ReportsClient() {
 
         // Map data to clean object structure for Excel
         const excelData = data.rawOrders.map((o: any) => ({
-            "ID Orden": o.id,
-            "Fecha": format(new Date(o.created_at), "yyyy-MM-dd"),
-            "Hora": format(new Date(o.created_at), "HH:mm:ss"),
-            "Cajero": o.profiles?.full_name || "Desconocido",
-            "Método Pago": o.payment_method,
-            "Estado": o.status === "COMPLETED" ? "Completo" : "Cancelado",
-            "Total": Number(o.total_amount.toFixed(2)) // Ensure it's a number for Excel math
+            [t.order_id]: o.id,
+            [t.date]: format(new Date(o.created_at), "yyyy-MM-dd"),
+            [t.time]: format(new Date(o.created_at), "HH:mm:ss"),
+            [t.cashier]: o.profiles?.full_name || t.unknown,
+            [t.payment_method]: o.payment_method,
+            [t.status]: o.status === "COMPLETED" ? t.completed : t.cancelled,
+            [t.total]: Number(o.total_amount.toFixed(2)) // Ensure it's a number for Excel math
         }))
 
         // Create Worksheet
@@ -228,7 +228,7 @@ export function ReportsClient() {
                                         {data.metrics.orderCount}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Completed transactions
+                                        {t.completed_transactions}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -242,7 +242,7 @@ export function ReportsClient() {
                                         {formatCurrency(data.metrics.averageTicket)}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Revenue per order
+                                        {t.revenue_per_order}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -252,7 +252,7 @@ export function ReportsClient() {
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                             <Card className="col-span-4">
                                 <CardHeader>
-                                    <CardTitle>Sales Trend</CardTitle>
+                                    <CardTitle>{t.sales_trend}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="pl-2">
                                     <ResponsiveContainer width="100%" height={350}>
@@ -274,9 +274,9 @@ export function ReportsClient() {
                             </Card>
                             <Card className="col-span-3">
                                 <CardHeader>
-                                    <CardTitle>Cashier Performance</CardTitle>
+                                    <CardTitle>{t.cashier_performance}</CardTitle>
                                     <CardDescription>
-                                        Revenue by staff member
+                                        {t.revenue_by_staff}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -295,7 +295,7 @@ export function ReportsClient() {
                         {/* Detailed Table */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>{t.recent_orders} (Detailed)</CardTitle>
+                                <CardTitle>{t.recent_orders} ({t.detailed})</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="max-h-[400px] overflow-y-auto relative">
@@ -303,9 +303,9 @@ export function ReportsClient() {
                                         <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
                                             <TableRow>
                                                 <TableHead>{t.order_id}</TableHead>
-                                                <TableHead>Time</TableHead>
-                                                <TableHead>Cashier</TableHead>
-                                                <TableHead>Payment</TableHead>
+                                                <TableHead>{t.time}</TableHead>
+                                                <TableHead>{t.cashier}</TableHead>
+                                                <TableHead>{t.payment}</TableHead>
                                                 <TableHead>{t.status}</TableHead>
                                                 <TableHead className="text-right">{t.amount}</TableHead>
                                             </TableRow>
@@ -313,7 +313,7 @@ export function ReportsClient() {
                                         <TableBody>
                                             {data.rawOrders.length === 0 ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} className="text-center h-24">No orders found.</TableCell>
+                                                    <TableCell colSpan={6} className="text-center h-24">{t.no_orders_found}</TableCell>
                                                 </TableRow>
                                             ) : (
                                                 data.rawOrders.map((order: any) => (
@@ -325,7 +325,7 @@ export function ReportsClient() {
                                                                 <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold">
                                                                     {order.profiles?.full_name?.charAt(0) || "U"}
                                                                 </div>
-                                                                <span className="text-sm">{order.profiles?.full_name || "Unknown"}</span>
+                                                                <span className="text-sm">{order.profiles?.full_name || t.unknown}</span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
@@ -353,8 +353,8 @@ export function ReportsClient() {
                     </div>
                 ) : (
                     <div className="text-center py-10 text-muted-foreground w-full bg-slate-50 border rounded-lg">
-                        <p>No data available for this period.</p>
-                        <Button variant="link" onClick={() => setRange("today")}>Reset to Today</Button>
+                        <p>{t.no_data_period}</p>
+                        <Button variant="link" onClick={() => setRange("today")}>{t.reset_today}</Button>
                     </div>
                 )}
             </Tabs>

@@ -99,13 +99,16 @@ export async function createProduct(formData: FormData) {
     const supabase = await createClient()
 
     // Verify User
-    // Verify User
     await requireRole(["admin", "manager"])
 
     const name = formData.get("name") as string
     const price = parseFloat(formData.get("price") as string)
     const category_id = formData.get("category_id") as string
+    // stock = Store Stock
     const stock = parseInt(formData.get("stock") as string) || 0
+    // stock_warehouse = Warehouse Stock
+    const stock_warehouse = parseInt(formData.get("stock_warehouse") as string) || 0
+
     const imageFile = formData.get("image") as File
 
     if (!name || isNaN(price)) return { error: "Name and Price are required" }
@@ -147,11 +150,12 @@ export async function createProduct(formData: FormData) {
             name,
             price,
             category_id: category_id === "none" ? null : category_id,
-            stock,
-            image_url, // Add image url
+            stock, // Store Stock
+            stock_warehouse, // Warehouse Stock
+            image_url,
             available: true
         })
-            .select() // Add robustness
+            .select()
 
         if (error) throw error
         revalidatePath("/dashboard/products")
@@ -174,6 +178,7 @@ export async function updateProduct(formData: FormData) {
     const price = parseFloat(formData.get("price") as string)
     const category_id = formData.get("category_id") as string
     const stock = parseInt(formData.get("stock") as string) || 0
+    const stock_warehouse = parseInt(formData.get("stock_warehouse") as string) || 0
     const imageFile = formData.get("image") as File
 
     if (!id || !name || isNaN(price)) return { error: "ID, Name and Price are required" }
@@ -187,12 +192,6 @@ export async function updateProduct(formData: FormData) {
 
     try {
         const adminDb = getAdminDb()
-
-        // Handle Image Upload (Only if NO URL provided and File exists)
-        // Cases:
-        // 1. Client uploaded -> image_url is set. File is null/ignored.
-        // 2. Client sent file -> image_url is null. File is set. Upload here.
-        // 3. No change -> image_url is current_url. File is null.
 
         if (!image_url && imageFile && imageFile.size > 0) {
             const fileExt = imageFile.name.split('.').pop()
@@ -223,6 +222,7 @@ export async function updateProduct(formData: FormData) {
             price,
             category_id: category_id === "none" ? null : category_id,
             stock,
+            stock_warehouse,
             image_url,
         }).eq("id", id)
 
@@ -259,13 +259,13 @@ export async function updateStock(formData: FormData) {
     const supabase = await createClient()
 
     // Verify User
-    // Verify User
     const { user } = await requireRole(["admin", "manager"])
 
     const productId = formData.get("productId") as string
     const type = formData.get("type") as "IN" | "OUT" | "ADJUSTMENT"
     const quantity = parseInt(formData.get("quantity") as string)
     const reason = formData.get("reason") as string
+    const target = formData.get("target") as "store" | "warehouse" || "store" // Default to store for backward compatibility
 
     if (!productId || !type || isNaN(quantity) || quantity <= 0) {
         return { error: "Invalid data provided" }
@@ -274,29 +274,35 @@ export async function updateStock(formData: FormData) {
     try {
         const adminDb = getAdminDb()
 
-        // 1. Get current product to check stock (if going OUT)
+        // 1. Get current product to check stock
         const { data: product, error: fetchError } = await adminDb
             .from("products")
-            .select("stock")
+            .select("stock, stock_warehouse")
             .eq("id", productId)
             .single()
 
         if (fetchError) throw fetchError
 
         // 2. Calculate new stock
-        let newStock = product.stock
+        let newStockStore = product.stock
+        let newStockWarehouse = product.stock_warehouse
         const qtyAdjustment = type === "OUT" ? -quantity : quantity
 
-        newStock += qtyAdjustment
-
-        if (newStock < 0) {
-            return { error: "Insufficient stock" }
+        if (target === "store") {
+            newStockStore += qtyAdjustment
+            if (newStockStore < 0) return { error: "Insufficient Store Stock" }
+        } else {
+            newStockWarehouse += qtyAdjustment
+            if (newStockWarehouse < 0) return { error: "Insufficient Warehouse Stock" }
         }
 
         // 3. Update Product
         const { error: updateError } = await adminDb
             .from("products")
-            .update({ stock: newStock })
+            .update({
+                stock: newStockStore,
+                stock_warehouse: newStockWarehouse
+            })
             .eq("id", productId)
 
         if (updateError) throw updateError
@@ -308,7 +314,7 @@ export async function updateStock(formData: FormData) {
                 product_id: productId,
                 type: type,
                 quantity: quantity,
-                reason: reason,
+                reason: reason + ` (${target.toUpperCase()})`,
                 user_id: user.id
             })
 
@@ -318,6 +324,58 @@ export async function updateStock(formData: FormData) {
         revalidatePath("/dashboard/products")
         return { success: true }
 
+    } catch (e: any) {
+        return { error: e.message }
+    }
+}
+
+export async function moveStockToStore(productId: string, quantity: number) {
+    const { user } = await requireRole(["admin", "manager"])
+
+    if (quantity <= 0) return { error: "Quantity must be positive" }
+
+    try {
+        const adminDb = getAdminDb()
+
+        // 1. Get current product
+        const { data: product, error: fetchError } = await adminDb
+            .from("products")
+            .select("stock, stock_warehouse")
+            .eq("id", productId)
+            .single()
+
+        if (fetchError) throw fetchError
+
+        // 2. Validate
+        if (product.stock_warehouse < quantity) {
+            return { error: "Insufficient Warehouse Stock" }
+        }
+
+        // 3. Update
+        const newStockStore = product.stock + quantity
+        const newStockWarehouse = product.stock_warehouse - quantity
+
+        const { error: updateError } = await adminDb
+            .from("products")
+            .update({
+                stock: newStockStore,
+                stock_warehouse: newStockWarehouse
+            })
+            .eq("id", productId)
+
+        if (updateError) throw updateError
+
+        // 4. Record Movement (Internal Transfer)
+        await adminDb.from("stock_movements").insert({
+            product_id: productId,
+            type: "ADJUSTMENT",
+            quantity: quantity,
+            reason: "Transfer: Warehouse -> Store",
+            user_id: user.id
+        })
+
+        revalidatePath("/dashboard/stock")
+        return { success: true }
     } catch (e: any) {
         return { error: e.message }
     }

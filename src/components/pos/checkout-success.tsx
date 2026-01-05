@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Check } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/providers/language-provider"
 
 interface CheckoutSuccessProps {
     open: boolean
@@ -14,6 +15,7 @@ interface CheckoutSuccessProps {
 }
 
 export function CheckoutSuccess({ open, onOpenChange, orderId, total, change }: CheckoutSuccessProps) {
+    const { t } = useLanguage()
     const [animate, setAnimate] = useState(false)
 
     useEffect(() => {
@@ -39,8 +41,8 @@ export function CheckoutSuccess({ open, onOpenChange, orderId, total, change }: 
                         `} strokeWidth={4} />
                     </div>
 
-                    <DialogTitle className="text-3xl font-bold mb-2">Payment Successful!</DialogTitle>
-                    <p className="text-emerald-100 text-center">Your transaction has been processed.</p>
+                    <DialogTitle className="text-3xl font-bold mb-2">{t.payment_successful}</DialogTitle>
+                    <p className="text-emerald-100 text-center">{t.transaction_processed}</p>
 
                     {/* Confeti decoration (CSS circles) */}
                     <div className="absolute top-10 left-10 w-4 h-4 rounded-full bg-yellow-400 opacity-50"></div>
@@ -50,13 +52,13 @@ export function CheckoutSuccess({ open, onOpenChange, orderId, total, change }: 
 
                 <div className="p-8 space-y-6">
                     <div className="space-y-2 text-center">
-                        <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">Total Amount</p>
+                        <p className="text-sm text-muted-foreground uppercase tracking-widest font-bold">{t.total_amount}</p>
                         <p className="text-4xl font-bold text-slate-800">${total?.toFixed(2)}</p>
                     </div>
 
                     {orderId && (
                         <div className="bg-slate-50 p-4 rounded-lg flex justify-between items-center text-sm border">
-                            <span className="text-muted-foreground">Order Ref</span>
+                            <span className="text-muted-foreground">{t.order_ref}</span>
                             <span className="font-mono font-bold">#{orderId.slice(0, 8)}</span>
                         </div>
                     )}
@@ -65,7 +67,7 @@ export function CheckoutSuccess({ open, onOpenChange, orderId, total, change }: 
                         className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-lg font-bold shadow-lg shadow-emerald-200"
                         onClick={() => onOpenChange(false)}
                     >
-                        Start New Order
+                        {t.start_new_order}
                     </Button>
                 </div>
             </DialogContent>

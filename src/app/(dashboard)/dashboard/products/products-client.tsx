@@ -49,9 +49,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useLanguage } from "@/providers/language-provider"
 import { useCurrency } from "@/providers/currency-provider"
 
 export function ProductsClient({ initialProducts, categories }: { initialProducts: any[], categories: any[] }) {
+    const { t } = useLanguage()
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [editingProduct, setEditingProduct] = useState<any>(null)
@@ -152,32 +154,36 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={openNew}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Product
+                            <Plus className="mr-2 h-4 w-4" /> {t.add_product}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>{editingProduct ? "Edit Product" : "New Product"}</DialogTitle>
+                            <DialogTitle>{editingProduct ? t.edit_product : t.add_product}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="grid gap-4 py-4" key={editingProduct?.id || 'new'}>
                             <input type="hidden" name="id" value={editingProduct?.id || ""} />
                             <input type="hidden" name="current_image_url" value={editingProduct?.image_url || ""} />
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">{t.name}</Label>
                                 <Input id="name" name="name" placeholder="Classic Burger" required defaultValue={editingProduct?.name} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                    <Label htmlFor="price">Price ($)</Label>
-                                    <Input id="price" name="price" type="number" step="0.01" placeholder="10.00" required defaultValue={editingProduct?.price} />
+                                    <Label htmlFor="stock">{t.store_stock}</Label>
+                                    <Input id="stock" name="stock" type="number" placeholder="20" defaultValue={editingProduct?.stock} />
                                 </div>
                                 <div className="grid gap-2">
-                                    <Label htmlFor="stock">Stock</Label>
-                                    <Input id="stock" name="stock" type="number" placeholder="100" defaultValue={editingProduct?.stock} />
+                                    <Label htmlFor="stock_warehouse">{t.warehouse_stock}</Label>
+                                    <Input id="stock_warehouse" name="stock_warehouse" type="number" placeholder="80" defaultValue={editingProduct?.stock_warehouse} />
                                 </div>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="category">Category</Label>
+                                <Label htmlFor="price">{t.price} ($)</Label>
+                                <Input id="price" name="price" type="number" step="0.01" placeholder="10.00" required defaultValue={editingProduct?.price} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">{t.category}</Label>
                                 <Select name="category_id" defaultValue={editingProduct?.category_id || "none"}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select category" />
@@ -197,12 +203,12 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="image">Product Image</Label>
+                                <Label htmlFor="image">{t.image}</Label>
                                 <Input id="image" name="image" type="file" accept="image/*" className="cursor-pointer" />
                             </div>
 
                             <Button type="submit" className="mt-4 bg-emerald-600" disabled={isLoading}>
-                                Save Product
+                                {t.save}
                             </Button>
                         </form>
                     </DialogContent>
@@ -211,15 +217,15 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                 <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>{t.are_you_sure}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the product.
+                                {t.delete_confirmation}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                                Delete
+                                {t.delete}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -231,11 +237,13 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Product</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead>Price</TableHead>
-                                <TableHead>Stock</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t.products}</TableHead>
+                                <TableHead>{t.category}</TableHead>
+                                <TableHead>{t.price}</TableHead>
+
+                                <TableHead className="text-center">{t.store}</TableHead>
+                                <TableHead className="text-center">{t.whse}</TableHead>
+                                <TableHead className="text-right">{t.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -261,10 +269,15 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                                         )}
                                     </TableCell>
                                     <TableCell>{formatCurrency(p.price)}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-center">
                                         <Badge variant={p.stock > 10 ? "secondary" : "destructive"}>
                                             {p.stock}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <span className="text-muted-foreground font-medium">
+                                            {p.stock_warehouse || 0}
+                                        </span>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
@@ -290,7 +303,7 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                             ))}
                             {initialProducts.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
+                                    <TableCell colSpan={6} className="h-24 text-center">
                                         No products found.
                                     </TableCell>
                                 </TableRow>

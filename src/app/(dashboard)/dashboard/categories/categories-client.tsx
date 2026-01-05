@@ -24,8 +24,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useLanguage } from "@/providers/language-provider"
 
 export function CategoriesClient({ initialCategories }: { initialCategories: any[] }) {
+    const { t } = useLanguage()
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -63,27 +65,27 @@ export function CategoriesClient({ initialCategories }: { initialCategories: any
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-emerald-600 hover:bg-emerald-700">
-                            <Plus className="mr-2 h-4 w-4" /> Add Category
+                            <Plus className="mr-2 h-4 w-4" /> {t.add_category}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>New Category</DialogTitle>
+                            <DialogTitle>{t.new_category}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input id="name" name="name" placeholder="e.g. Beverages" required />
+                                <Label htmlFor="name">{t.name}</Label>
+                                <Input id="name" name="name" placeholder={t.search_placeholder} required />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="color">Color</Label>
+                                <Label htmlFor="color">{t.color}</Label>
                                 <div className="flex gap-2">
                                     <Input id="color" name="color" type="color" className="w-12 h-10 p-1" defaultValue="#10b981" />
-                                    <Input disabled value="Pick a color for buttons" className="flex-1 bg-muted" />
+                                    <Input disabled value={t.pick_color} className="flex-1 bg-muted" />
                                 </div>
                             </div>
                             <Button type="submit" className="mt-4 bg-emerald-600" disabled={isLoading}>
-                                {isLoading ? "Saving..." : "Save Category"}
+                                {isLoading ? t.saving : t.save_category}
                             </Button>
                         </form>
                     </DialogContent>
@@ -92,15 +94,15 @@ export function CategoriesClient({ initialCategories }: { initialCategories: any
                 <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>{t.are_you_sure}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete the category. This might affect products linked to this category.
+                                {t.delete_category_confirm_desc}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                                Delete
+                                {t.delete}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -131,7 +133,7 @@ export function CategoriesClient({ initialCategories }: { initialCategories: any
                 ))}
                 {initialCategories.length === 0 && (
                     <div className="col-span-full text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                        No categories found. Create one to get started.
+                        {t.no_categories_found}
                     </div>
                 )}
             </div>

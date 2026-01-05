@@ -52,8 +52,11 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useCurrency } from "@/providers/currency-provider"
+import { OrderDetailsView } from "@/components/dashboard/order-details-view"
+import { useLanguage } from "@/providers/language-provider"
 
 export function CustomersClient({ initialCustomers, currentUserRole }: { initialCustomers: any[], currentUserRole: string | null }) {
+    const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
     const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
@@ -66,6 +69,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
     const [loadingStats, setLoadingStats] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [editingCustomer, setEditingCustomer] = useState<any>(null)
+    const [viewOrder, setViewOrder] = useState<any>(null)
 
     // Use passed data instead of mock
     const customers = initialCustomers.filter(c =>
@@ -137,37 +141,37 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={openNew}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Customer
+                            <Plus className="mr-2 h-4 w-4" /> {t.add_customer}
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>{editingCustomer ? "Edit Customer" : "Add New Customer"}</DialogTitle>
+                            <DialogTitle>{editingCustomer ? t.edit_customer : t.add_customer}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="grid gap-4 py-4" key={editingCustomer?.id || 'new'}>
                             {editingCustomer && <input type="hidden" name="id" value={editingCustomer.id} />}
                             <div className="grid gap-2">
-                                <Label htmlFor="fullName">Full Name</Label>
+                                <Label htmlFor="fullName">{t.full_name}</Label>
                                 <Input id="fullName" name="fullName" placeholder="Jane Doe" required defaultValue={editingCustomer?.full_name} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="cedula">Cédula (ID)</Label>
+                                <Label htmlFor="cedula">{t.cedula}</Label>
                                 <Input id="cedula" name="cedula" placeholder="12.345.678" defaultValue={editingCustomer?.cedula} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">Phone Number</Label>
+                                <Label htmlFor="phone">{t.phone}</Label>
                                 <Input id="phone" name="phone" placeholder="(555) 555-5555" defaultValue={editingCustomer?.phone} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{t.email}</Label>
                                 <Input id="email" name="email" type="email" placeholder="jane@example.com" defaultValue={editingCustomer?.email} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="notes">Notes</Label>
+                                <Label htmlFor="notes">{t.notes}</Label>
                                 <Input id="notes" name="notes" placeholder="VIP, Allergies, etc." defaultValue={editingCustomer?.notes} />
                             </div>
                             <Button type="submit" className="mt-4 bg-emerald-600" disabled={isLoading}>
-                                {editingCustomer ? "Update Customer" : "Save Customer"}
+                                {t.save}
                             </Button>
                         </form>
                     </DialogContent>
@@ -176,15 +180,15 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                 <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>{t.are_you_sure}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the customer.
+                                {t.delete_confirmation}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                                Delete
+                                {t.delete}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -197,7 +201,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search customers..."
+                            placeholder={t.search_placeholder}
                             className="pl-8"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -208,12 +212,12 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Client Name</TableHead>
-                                <TableHead>Cédula</TableHead>
-                                <TableHead>Contact</TableHead>
-                                <TableHead>Total Spent</TableHead>
-                                <TableHead>Notes</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead>{t.customer}</TableHead>
+                                <TableHead>{t.cedula}</TableHead>
+                                <TableHead>{t.phone} / {t.email}</TableHead>
+                                <TableHead>{t.total_spent}</TableHead>
+                                <TableHead>{t.notes}</TableHead>
+                                <TableHead className="text-right">{t.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -227,7 +231,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                 customers.map((customer) => (
                                     <TableRow
                                         key={customer.id}
-                                        className="cursor-pointer hover:bg-muted/50"
+                                        className="cursor-pointer hover:bg-muted/50 transition-colors"
                                         onClick={() => handleRowClick(customer)}
                                     >
                                         <TableCell className="font-medium">{customer.full_name}</TableCell>
@@ -298,25 +302,25 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                             {/* Key Metrics */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Total Spent</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.total_spent}</p>
                                     <p className="text-2xl font-bold text-emerald-700">
                                         {formatCurrency(customerStats.stats?.totalSpent)}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Average Order</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.avg_ticket}</p>
                                     <p className="text-2xl font-bold text-blue-700">
                                         {formatCurrency(customerStats.stats?.averageOrderValue)}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-orange-50 rounded-lg border border-orange-100">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Total Orders</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.total_orders}</p>
                                     <p className="text-2xl font-bold text-orange-700">
                                         {customerStats.stats?.orderCount}
                                     </p>
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                    <p className="text-xs text-muted-foreground uppercase font-bold">Last Active</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t.last_active}</p>
                                     <p className="text-lg font-bold text-gray-700">
                                         {customerStats.history?.[0]
                                             ? new Date(customerStats.history[0].created_at).toLocaleDateString()
@@ -332,7 +336,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                             <div>
                                 <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                                     <Badge variant="secondary" className="rounded-full">★</Badge>
-                                    Top Products
+                                    {t.top_selling}
                                 </h3>
                                 <div className="space-y-3">
                                     {customerStats.topProducts?.length === 0 ? (
@@ -366,11 +370,15 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
 
                             {/* Recent History */}
                             <div>
-                                <h3 className="text-lg font-semibold mb-3">Order History</h3>
+                                <h3 className="text-lg font-semibold mb-3">{t.order_history}</h3>
                                 <ScrollArea className="h-[200px] rounded-md border p-2">
                                     <div className="space-y-2">
                                         {customerStats.history?.map((order: any) => (
-                                            <div key={order.id} className="flex items-center justify-between p-2 border-b last:border-0">
+                                            <div
+                                                key={order.id}
+                                                className="flex items-center justify-between p-2 border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
+                                                onClick={() => setViewOrder({ ...order, customers: selectedCustomer })}
+                                            >
                                                 <div>
                                                     <p className="text-sm font-bold">Order #{order.id.slice(0, 8)}</p>
                                                     <p className="text-xs text-muted-foreground">
@@ -390,6 +398,14 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                     ) : null}
                 </SheetContent>
             </Sheet>
+            <Dialog open={!!viewOrder} onOpenChange={(open) => !open && setViewOrder(null)}>
+                <DialogContent className="max-w-[400px] sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>{t.view_details}</DialogTitle>
+                    </DialogHeader>
+                    {viewOrder && <OrderDetailsView order={viewOrder} />}
+                </DialogContent>
+            </Dialog>
         </div >
     )
 }

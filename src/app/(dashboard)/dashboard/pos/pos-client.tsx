@@ -23,8 +23,10 @@ import { useOffline } from "@/providers/offline-context"
 import { useCart } from "@/providers/cart-context"
 import { CheckoutSuccess } from "@/components/pos/checkout-success"
 import { useCurrency } from "@/providers/currency-provider"
+import { useLanguage } from "@/providers/language-provider"
 
 export function POSInterface({ initialProducts, categories }: { initialProducts: any[], categories: any[] }) {
+    const { t } = useLanguage()
     const { toast } = useToast()
     const { cart, addToCart, updateQuantity, clearCart, cartTotal } = useCart()
     const { formatCurrency } = useCurrency()
@@ -116,7 +118,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
 
         setIsProcessing(false)
         if (result.error) {
-            toast({ title: "Checkout Failed", description: result.error, variant: "destructive" })
+            toast({ title: t.checkout_failed, description: result.error, variant: "destructive" })
         } else {
             // SUCCESS FLOW
             setLastOrder({ id: result.orderId || "", total: cartTotal })
@@ -146,7 +148,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                         onClick={() => setActiveCategory("all")}
                         className={activeCategory === "all" ? "bg-emerald-600" : ""}
                     >
-                        All
+                        {t.all}
                     </Button>
                     {categories.map(cat => (
                         <Button
@@ -165,7 +167,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                 <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search products..."
+                        placeholder={t.search_placeholder}
                         className="pl-9 h-11"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -191,7 +193,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                     )}
                                     {product.stock <= 0 && (
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                            <span className="text-white font-bold bg-red-500 px-2 py-1 rounded text-xs">OUT OF STOCK</span>
+                                            <span className="text-white font-bold bg-red-500 px-2 py-1 rounded text-xs">{t.out_of_stock}</span>
                                         </div>
                                     )}
                                     {product.stock > 0 && (
@@ -213,7 +215,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                     <h3 className="font-semibold text-sm line-clamp-2 leading-tight mb-1">{product.name}</h3>
                                     <div className="mt-auto flex items-center justify-between">
                                         <span className="font-bold text-emerald-700">{formatCurrency(product.price)}</span>
-                                        <span className="text-xs text-muted-foreground">{product.stock} items</span>
+                                        <span className="text-xs text-muted-foreground">{product.stock} {t.items}</span>
                                     </div>
                                 </div>
                             </Card>
@@ -227,10 +229,10 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                 <div className="p-4 border-b flex items-center justify-between bg-muted/30">
                     <h2 className="font-semibold flex items-center gap-2">
                         <ShoppingCart className="h-5 w-5" />
-                        Current Order
+                        {t.cart}
                     </h2>
                     <Button variant="ghost" size="sm" onClick={() => clearCart()} disabled={cart.length === 0} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                        Clear
+                        {t.clear_cart}
                     </Button>
                 </div>
 
@@ -238,7 +240,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                     {cart.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center opacity-50 space-y-2">
                             <ShoppingCart className="h-12 w-12" />
-                            <p>Cart is empty</p>
+                            <p>{t.cart_empty}</p>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -272,16 +274,16 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                 <div className="p-4 border-t bg-muted/20 space-y-4">
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                            <span>Subtotal</span>
+                            <span>{t.subtotal}</span>
                             <span>{formatCurrency(cartTotal)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span>Tax ({taxRate}%)</span>
+                            <span>{t.tax} ({taxRate}%)</span>
                             <span>{formatCurrency(taxAmount)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
-                            <span>Total</span>
+                            <span>{t.total}</span>
                             <span>{formatCurrency(finalTotal)}</span>
                         </div>
                     </div>
@@ -291,7 +293,7 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                         disabled={cart.length === 0}
                         onClick={() => setIsCheckoutOpen(true)}
                     >
-                        Checkout ({formatCurrency(finalTotal)})
+                        {t.checkout} ({formatCurrency(finalTotal)})
                     </Button>
                 </div>
             </div>
@@ -300,22 +302,22 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
             <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Complete Payment</DialogTitle>
+                        <DialogTitle>{t.complete_payment}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="cedula">Customer ID (Cédula)</Label>
+                            <Label htmlFor="cedula">{t.cedula}</Label>
                             <div className="flex gap-2">
                                 <Input
                                     id="cedula"
-                                    placeholder="Enter Cédula (e.g. 12345678)"
+                                    placeholder={t.enter_cedula}
                                     value={cedula}
                                     onChange={(e) => handleSearchCustomer(e.target.value)}
                                     autoFocus
                                     className={!customer && cedula.length > 4 ? "border-red-500 focus-visible:ring-red-500" : ""}
                                 />
                             </div>
-                            {isSearching && <p className="text-xs text-muted-foreground">Searching...</p>}
+                            {isSearching && <p className="text-xs text-muted-foreground">{t.searching}</p>}
                             {customer && (
                                 <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium bg-emerald-50 p-2 rounded">
                                     <User className="h-4 w-4" />
@@ -323,13 +325,13 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                 </div>
                             )}
                             {!customer && cedula.length > 4 && !isSearching && (
-                                <p className="text-xs text-red-500 font-medium">Customer not found.</p>
+                                <p className="text-xs text-red-500 font-medium">{t.customer_not_found}</p>
                             )}
                         </div>
 
                         <div className="flex justify-center p-4 bg-muted/30 rounded-lg">
                             <div className="text-center">
-                                <p className="text-sm text-muted-foreground">Total Amount</p>
+                                <p className="text-sm text-muted-foreground">{t.total}</p>
                                 <p className="text-4xl font-bold text-emerald-600">{formatCurrency(finalTotal)}</p>
                             </div>
                         </div>
@@ -347,19 +349,21 @@ export function POSInterface({ initialProducts, categories }: { initialProducts:
                                     {method === 'CASH' && <Banknote className="h-6 w-6" />}
                                     {method === 'CARD' && <CreditCard className="h-6 w-6" />}
                                     {method === 'TRANSFER' && <CreditCard className="h-6 w-6" />}
-                                    <span className="text-xs font-bold">{method}</span>
+                                    <span className="text-xs font-bold">{method === 'CASH' ? t.cash :
+                                        method === 'CARD' ? t.card :
+                                            method === 'TRANSFER' ? t.transfer : method}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCheckoutOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setIsCheckoutOpen(false)}>{t.cancel}</Button>
                         <Button
                             className="bg-emerald-600 w-full md:w-auto"
                             onClick={handleCheckout}
                             disabled={isProcessing || !customer}
                         >
-                            {isProcessing ? "Processing..." : "Pay & Print"}
+                            {isProcessing ? t.processing : t.pay_print}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

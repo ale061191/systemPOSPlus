@@ -90,9 +90,12 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                                     <p className="text-xs text-muted-foreground">{formatCurrency(product.price || product.selling_price)}</p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                    Stock: {product.stock}
+                                            <div className="text-right flex flex-col gap-1">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 border border-red-200">
+                                                    Store: {product.stock}
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                                    Whse: {product.stock_warehouse || 0}
                                                 </span>
                                             </div>
                                         </div>
@@ -127,9 +130,12 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                                     <p className="text-xs text-muted-foreground">{formatCurrency(product.price || product.selling_price)}</p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                                    Stock: {product.stock}
+                                            <div className="text-right flex flex-col gap-1">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                                    Store: {product.stock}
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                                    Whse: {product.stock_warehouse || 0}
                                                 </span>
                                             </div>
                                         </div>
@@ -164,9 +170,12 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                                     <p className="text-xs text-muted-foreground">{formatCurrency(product.price || product.selling_price)}</p>
                                                 </div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                                    Stock: {product.stock}
+                                            <div className="text-right flex flex-col gap-1">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                    Store: {product.stock}
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                                                    Whse: {product.stock_warehouse || 0}
                                                 </span>
                                             </div>
                                         </div>
