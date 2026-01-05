@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { AlertOctagon, AlertTriangle, CheckCircle, Package } from "lucide-react"
 import Link from "next/link"
 import { useCurrency } from "@/providers/currency-provider"
+import { useLanguage } from "@/providers/language-provider"
 
 interface StockDetailsDialogProps {
     children: React.ReactNode
@@ -23,6 +24,7 @@ interface StockDetailsDialogProps {
 }
 
 export function StockDetailsDialog({ children, lowStockProducts, healthyProducts, totalProductsCount }: StockDetailsDialogProps) {
+    const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
 
     // 1. Filter Logic
@@ -43,9 +45,9 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle>Stock Status Details</DialogTitle>
+                    <DialogTitle>{t.stock_status_details}</DialogTitle>
                     <DialogDescription>
-                        Overview of your inventory health alerts.
+                        {t.inventory_health_overview}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -53,15 +55,15 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="critical" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
                             <AlertOctagon className="mr-2 h-4 w-4" />
-                            Critical ({criticalItems.length})
+                            {t.critical} ({criticalItems.length})
                         </TabsTrigger>
                         <TabsTrigger value="warning" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
                             <AlertTriangle className="mr-2 h-4 w-4" />
-                            Warning ({warningItems.length})
+                            {t.warning} ({warningItems.length})
                         </TabsTrigger>
                         <TabsTrigger value="healthy" className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-700">
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Healthy ({healthyCount})
+                            {t.healthy} ({healthyCount})
                         </TabsTrigger>
                     </TabsList>
 
@@ -71,7 +73,7 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                             {criticalItems.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                     <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
-                                    <p>No critical items!</p>
+                                    <p>{t.no_critical_items}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -92,10 +94,10 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                             </div>
                                             <div className="text-right flex flex-col gap-1">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 border border-red-200">
-                                                    Store: {product.stock}
+                                                    {t.store}: {product.stock}
                                                 </span>
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                                    Whse: {product.stock_warehouse || 0}
+                                                    {t.whse}: {product.stock_warehouse || 0}
                                                 </span>
                                             </div>
                                         </div>
@@ -111,7 +113,7 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                             {warningItems.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                     <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
-                                    <p>No items in warning state.</p>
+                                    <p>{t.no_warning_items}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -132,10 +134,10 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                             </div>
                                             <div className="text-right flex flex-col gap-1">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-800 border border-orange-200">
-                                                    Store: {product.stock}
+                                                    {t.store}: {product.stock}
                                                 </span>
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                                    Whse: {product.stock_warehouse || 0}
+                                                    {t.whse}: {product.stock_warehouse || 0}
                                                 </span>
                                             </div>
                                         </div>
@@ -151,7 +153,7 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                             {healthyItems.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                     <AlertTriangle className="h-10 w-10 mb-2 text-yellow-500" />
-                                    <p>No healthy items found.</p>
+                                    <p>{t.no_healthy_items}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -172,10 +174,10 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                             </div>
                                             <div className="text-right flex flex-col gap-1">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                    Store: {product.stock}
+                                                    {t.store}: {product.stock}
                                                 </span>
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                                    Whse: {product.stock_warehouse || 0}
+                                                    {t.whse}: {product.stock_warehouse || 0}
                                                 </span>
                                             </div>
                                         </div>
