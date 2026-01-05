@@ -129,7 +129,7 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Product</TableHead>
-                                <TableHead>SKU</TableHead>
+
                                 <TableHead>Current Stock</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Manage</TableHead>
@@ -139,7 +139,7 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                             {filteredProducts.map((p) => (
                                 <TableRow key={p.id}>
                                     <TableCell className="font-medium">{p.name}</TableCell>
-                                    <TableCell className="text-muted-foreground text-sm">{p.sku || "-"}</TableCell>
+
                                     <TableCell className="font-bold text-lg">{p.stock}</TableCell>
                                     <TableCell>
                                         <Badge variant={p.stock > 10 ? "secondary" : p.stock > 0 ? "outline" : "destructive"}>
@@ -156,7 +156,7 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                             ))}
                             {filteredProducts.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
+                                    <TableCell colSpan={4} className="h-24 text-center">
                                         No products found matching your search.
                                     </TableCell>
                                 </TableRow>

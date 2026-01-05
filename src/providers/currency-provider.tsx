@@ -18,22 +18,27 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     const [currency, setCurrency] = useState<Currency>("USD")
     const [exchangeRate, setExchangeRate] = useState<number>(0)
 
-    useEffect(() => {
-        const fetchRate = async () => {
-            try {
-                const res = await fetch("/api/bcv-rates")
-                const data = await res.json()
-                if (data && data.dollar) {
-                    setExchangeRate(data.dollar)
-                }
-            } catch (error) {
-                console.error("Failed to fetch exchange rate:", error)
+    const fetchRate = async () => {
+        try {
+            const res = await fetch("/api/bcv-rates")
+            const data = await res.json()
+            if (data && data.dollar) {
+                setExchangeRate(data.dollar)
             }
+        } catch (error) {
+            console.error("Failed to fetch exchange rate:", error)
         }
+    }
+
+    useEffect(() => {
         fetchRate()
     }, [])
 
     const toggleCurrency = () => {
+        if (currency === "USD") {
+            // About to switch to VES, refresh rate
+            fetchRate()
+        }
         setCurrency(prev => (prev === "USD" ? "VES" : "USD"))
     }
 

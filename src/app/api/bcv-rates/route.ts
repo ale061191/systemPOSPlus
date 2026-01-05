@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
     try {
         const res = await fetch('https://bcv-api.rafnixg.dev/rates/', {
-            next: { revalidate: 3600 }, // Cache for 1 hour
+            next: { revalidate: 0 }, // No cache, fetch fresh data
         });
 
         if (!res.ok) {
