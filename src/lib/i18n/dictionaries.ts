@@ -107,6 +107,11 @@ export const dictionaries = {
         order_history: "Historial de Pedidos",
         customer_details_analytics: "Detalles del Cliente y Analítica",
         units_purchased: "unidades compradas",
+        client_type: "Tipo de Cliente",
+        student: "Estudiante",
+        professor: "Profesor",
+        worker: "Trabajador",
+        external: "Externo",
 
         // Staff
         add_staff: "Agregar Personal",
@@ -365,6 +370,11 @@ export const dictionaries = {
         order_history: "Order History",
         customer_details_analytics: "Customer Details & Analytics",
         units_purchased: "units purchased",
+        client_type: "Client Type",
+        student: "Student",
+        professor: "Professor",
+        worker: "Worker",
+        external: "External",
 
         // Staff
         add_staff: "Add Staff",

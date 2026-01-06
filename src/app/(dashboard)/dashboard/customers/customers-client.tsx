@@ -28,6 +28,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogDescription,
 } from "@/components/ui/dialog"
 import {
     Sheet,
@@ -36,6 +37,13 @@ import {
     SheetTitle,
     SheetDescription,
 } from "@/components/ui/sheet"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -70,6 +78,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [editingCustomer, setEditingCustomer] = useState<any>(null)
     const [viewOrder, setViewOrder] = useState<any>(null)
+    const [clientType, setClientType] = useState("Externo")
 
     // Use passed data instead of mock
     const customers = initialCustomers.filter(c =>
@@ -79,11 +88,13 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
 
     function handleEdit(customer: any) {
         setEditingCustomer(customer)
+        setClientType(customer.client_type || "Externo")
         setIsOpen(true)
     }
 
     function openNew() {
         setEditingCustomer(null)
+        setClientType("Externo")
         setIsOpen(true)
     }
     // ...
@@ -138,15 +149,16 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
                 <h1 className="text-lg font-semibold md:text-2xl">{t.customers_management}</h1>
+                <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={openNew}>
+                    <Plus className="mr-2 h-4 w-4" /> {t.add_customer}
+                </Button>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={openNew}>
-                            <Plus className="mr-2 h-4 w-4" /> {t.add_customer}
-                        </Button>
-                    </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{editingCustomer ? t.edit_customer : t.add_customer}</DialogTitle>
+                            <DialogDescription>
+                                {editingCustomer ? "Update customer details." : "Add a new customer to the system."}
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="grid gap-4 py-4" key={editingCustomer?.id || 'new'}>
                             {editingCustomer && <input type="hidden" name="id" value={editingCustomer.id} />}
@@ -157,6 +169,21 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                             <div className="grid gap-2">
                                 <Label htmlFor="cedula">{t.cedula}</Label>
                                 <Input id="cedula" name="cedula" placeholder="12.345.678" defaultValue={editingCustomer?.cedula} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="client_type">{t.client_type}</Label>
+                                <input type="hidden" name="client_type" value={clientType} />
+                                <Select value={clientType} onValueChange={setClientType}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Externo">{t.external}</SelectItem>
+                                        <SelectItem value="Estudiante">{t.student}</SelectItem>
+                                        <SelectItem value="Profesor">{t.professor}</SelectItem>
+                                        <SelectItem value="Trabajador">{t.worker}</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="phone">{t.phone}</Label>
@@ -214,6 +241,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                             <TableRow>
                                 <TableHead>{t.customer}</TableHead>
                                 <TableHead>{t.cedula}</TableHead>
+                                <TableHead>{t.client_type}</TableHead>
                                 <TableHead>{t.phone} / {t.email}</TableHead>
                                 <TableHead>{t.total_spent}</TableHead>
                                 <TableHead>{t.notes}</TableHead>
@@ -236,6 +264,9 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                     >
                                         <TableCell className="font-medium">{customer.full_name}</TableCell>
                                         <TableCell>{customer.cedula || "-"}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline">{customer.client_type || t.external}</Badge>
+                                        </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col text-xs">
                                                 <span>{customer.phone || "-"}</span>

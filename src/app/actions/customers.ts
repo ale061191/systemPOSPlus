@@ -83,6 +83,7 @@ export async function createCustomer(formData: FormData) {
     const phone = formData.get("phone") as string
     const email = formData.get("email") as string
     const notes = formData.get("notes") as string
+    const clientType = formData.get("client_type") as string
 
     if (!fullName) return { error: "Full Name is required" }
 
@@ -91,7 +92,8 @@ export async function createCustomer(formData: FormData) {
         cedula: cedula || null,
         phone: phone || null,
         email: email || null,
-        notes: notes || null
+        notes: notes || null,
+        client_type: clientType || 'Externo'
     }
 
     const { data, error } = await supabase
@@ -123,6 +125,7 @@ export async function updateCustomer(formData: FormData) {
     const phone = formData.get("phone") as string
     const email = formData.get("email") as string
     const notes = formData.get("notes") as string
+    const clientType = formData.get("client_type") as string
 
     if (!id || !fullName) return { error: "ID and Full Name are required" }
 
@@ -131,7 +134,8 @@ export async function updateCustomer(formData: FormData) {
         cedula: cedula || null,
         phone: phone || null,
         email: email || null,
-        notes: notes || null
+        notes: notes || null,
+        client_type: clientType || 'Externo'
     }
 
     const { error } = await supabase
