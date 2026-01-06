@@ -16,7 +16,7 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     const [currency, setCurrency] = useState<Currency>("USD")
-    const [exchangeRate, setExchangeRate] = useState<number>(0)
+    const [exchangeRate, setExchangeRate] = useState<number>(1)
 
     const fetchRate = async () => {
         try {
@@ -44,9 +44,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
                 }
             }
 
-            console.warn("All fetches failed.")
+            console.warn("All fetches failed. Using hardcoded fallback.")
+            setExchangeRate(60)
         } catch (error) {
-            console.error("Failed to fetch exchange rate:", error)
+            console.error("Failed to fetch exchange rate, using fallback:", error)
+            setExchangeRate(60)
         }
     }
 
