@@ -19,6 +19,7 @@ export const dictionaries = {
         system_settings: "Configuración del Sistema",
         settings_description: "Configura tus preferencias de terminal. Estos ajustes se guardan localmente en este dispositivo.",
         sales_analytics: "Analítica de Ventas",
+        sales_overview: "Resumen de Ventas",
         total_sales: "Ventas Totales",
         total_orders: "Total Pedidos",
         avg_ticket: "Ticket Promedio",
@@ -100,6 +101,8 @@ export const dictionaries = {
         total_spent: "Total Gastado",
         last_active: "Última Actividad",
         order_history: "Historial de Pedidos",
+        customer_details_analytics: "Detalles del Cliente y Analítica",
+        units_purchased: "unidades compradas",
 
         // Staff
         add_staff: "Agregar Personal",
@@ -270,6 +273,7 @@ export const dictionaries = {
         system_settings: "System Settings",
         settings_description: "Configure your terminal preferences. These settings are saved locally on this device.",
         sales_analytics: "Sales Analytics",
+        sales_overview: "Sales Overview",
         total_sales: "Total Sales",
         total_orders: "Total Orders",
         avg_ticket: "Avg. Ticket",
@@ -351,6 +355,8 @@ export const dictionaries = {
         total_spent: "Total Spent",
         last_active: "Last Active",
         order_history: "Order History",
+        customer_details_analytics: "Customer Details & Analytics",
+        units_purchased: "units purchased",
 
         // Staff
         add_staff: "Add Staff",

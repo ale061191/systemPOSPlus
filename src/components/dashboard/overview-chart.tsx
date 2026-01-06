@@ -4,21 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts'
 
+import { useLanguage } from "@/providers/language-provider"
+
 interface OverviewChartProps {
     data: { name: string; total: number }[]
 }
 
 export function OverviewChart({ data }: OverviewChartProps) {
+    const { t } = useLanguage()
     return (
         <Card className="col-span-4">
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Sales Overview</CardTitle>
+                <CardTitle>{t.sales_overview}</CardTitle>
                 <Select defaultValue="week">
                     <SelectTrigger className="w-[120px]">
                         <SelectValue placeholder="Period" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="week">This week</SelectItem>
+                        <SelectItem value="week">{t.week}</SelectItem>
                     </SelectContent>
                 </Select>
             </CardHeader>

@@ -289,7 +289,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                             {selectedCustomer?.full_name}
                         </SheetTitle>
                         <SheetDescription>
-                            Customer Details & Analytics
+                            {t.customer_details_analytics}
                         </SheetDescription>
                     </SheetHeader>
 
@@ -354,7 +354,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-medium">{product.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{product.count} units purchased</p>
+                                                        <p className="text-xs text-muted-foreground">{product.count} {t.units_purchased}</p>
                                                     </div>
                                                 </div>
                                                 <span className="font-bold text-sm bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
