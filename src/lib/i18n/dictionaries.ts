@@ -401,7 +401,6 @@ export const dictionaries = {
         cart_empty: "Cart is empty",
         complete_payment: "Complete Payment",
         enter_cedula: "Enter ID",
-        searching: "Searching...",
         customer_not_found: "Customer not found",
         processing: "Processing...",
         pay_print: "Pay & Print",
