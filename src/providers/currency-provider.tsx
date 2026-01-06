@@ -28,6 +28,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
                 if (data && typeof data.dollar === 'number') {
                     console.log("Rate from API:", data.dollar)
                     setExchangeRate(data.dollar)
+                    localStorage.setItem("last_exchange_rate", data.dollar.toString())
                     return
                 }
             }
@@ -40,14 +41,29 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
                 if (directData && typeof directData.dollar === 'number') {
                     console.log("Rate from Direct API:", directData.dollar)
                     setExchangeRate(directData.dollar)
+                    localStorage.setItem("last_exchange_rate", directData.dollar.toString())
                     return
                 }
             }
 
-            console.warn("All fetches failed. Using hardcoded fallback.")
-            setExchangeRate(60)
+            console.warn("All fetches failed. Checking cache...")
+            // Fall through to cache check in catch block is tricky here due to scope, easier to throw
+            throw new Error("All fetches failed")
         } catch (error) {
-            console.error("Failed to fetch exchange rate, using fallback:", error)
+            console.error("Failed to fetch exchange rate:", error)
+
+            // Try to recover from localStorage
+            const cachedRate = localStorage.getItem("last_exchange_rate")
+            if (cachedRate) {
+                const parsedRate = parseFloat(cachedRate)
+                if (!isNaN(parsedRate)) {
+                    console.log("Using cached rate:", parsedRate)
+                    setExchangeRate(parsedRate)
+                    return
+                }
+            }
+
+            console.warn("No cache found, using hardcoded fallback.")
             setExchangeRate(60)
         }
     }
