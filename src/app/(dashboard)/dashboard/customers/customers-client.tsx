@@ -137,7 +137,7 @@ export function CustomersClient({ initialCustomers, currentUserRole }: { initial
     return (
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold md:text-2xl">Customers</h1>
+                <h1 className="text-lg font-semibold md:text-2xl">{t.customers_management}</h1>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={openNew}>

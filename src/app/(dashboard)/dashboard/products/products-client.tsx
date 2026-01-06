@@ -150,6 +150,9 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
 
     return (
         <>
+            <div className="flex items-center justify-between">
+                <h1 className="text-lg font-semibold md:text-2xl">{t.product_catalog}</h1>
+            </div>
             <div className="flex justify-end">
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>

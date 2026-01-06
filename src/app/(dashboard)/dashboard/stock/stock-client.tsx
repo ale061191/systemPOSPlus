@@ -134,6 +134,9 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
 
     return (
         <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h1 className="text-lg font-semibold md:text-2xl">{t.inventory_management}</h1>
+            </div>
             {/* Helper Dialog for Adjustments */}
             <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
                 <DialogContent>

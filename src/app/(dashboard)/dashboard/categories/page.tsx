@@ -6,9 +6,6 @@ export default async function CategoriesPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-                <h1 className="text-lg font-semibold md:text-2xl">Categories</h1>
-            </div>
             <CategoriesClient initialCategories={categories || []} />
         </div>
     )
