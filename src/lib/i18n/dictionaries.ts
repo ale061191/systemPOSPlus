@@ -139,7 +139,6 @@ export const dictionaries = {
         cart_empty: "Carrito vacío",
         complete_payment: "Completar Pago",
         enter_cedula: "Ingrese Cédula",
-        searching: "Buscando...",
         customer_not_found: "Cliente no encontrado",
         processing: "Procesando...",
         pay_print: "Pagar e Imprimir",
