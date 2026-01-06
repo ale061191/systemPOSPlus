@@ -6,8 +6,10 @@ import { Search, Loader2, Package, Users } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { searchGlobal, SearchResult } from "@/app/actions/global-search"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/providers/language-provider"
 
 export function GlobalSearch() {
+    const { t } = useLanguage()
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState("")
@@ -56,7 +58,7 @@ export function GlobalSearch() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search products or customers..."
+                    placeholder={t.global_search_placeholder}
                     className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px]"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -69,16 +71,16 @@ export function GlobalSearch() {
                     {loading ? (
                         <div className="p-4 flex items-center justify-center text-sm text-muted-foreground">
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Searching...
+                            {t.searching}
                         </div>
                     ) : results.length === 0 ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                            No results found.
+                            {t.no_results_found}
                         </div>
                     ) : (
                         <div className="max-h-[300px] overflow-y-auto">
                             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                                Suggestions
+                                {t.suggestions}
                             </div>
                             {results.map((result) => (
                                 <div
