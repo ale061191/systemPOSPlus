@@ -20,11 +20,31 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
     const fetchRate = async () => {
         try {
+            console.log("Fetching exchange rate...")
+            // Try local API first
             const res = await fetch("/api/bcv-rates")
-            const data = await res.json()
-            if (data && data.dollar) {
-                setExchangeRate(data.dollar)
+            if (res.ok) {
+                const data = await res.json()
+                if (data && typeof data.dollar === 'number') {
+                    console.log("Rate from API:", data.dollar)
+                    setExchangeRate(data.dollar)
+                    return
+                }
             }
+
+            // Fallback: Try direct fetch if API route fails (handling CORS if possible)
+            console.warn("Local API failed, trying direct fetch...")
+            const directRes = await fetch("https://bcv-api.rafnixg.dev/rates/")
+            if (directRes.ok) {
+                const directData = await directRes.json()
+                if (directData && typeof directData.dollar === 'number') {
+                    console.log("Rate from Direct API:", directData.dollar)
+                    setExchangeRate(directData.dollar)
+                    return
+                }
+            }
+
+            console.warn("All fetches failed.")
         } catch (error) {
             console.error("Failed to fetch exchange rate:", error)
         }
