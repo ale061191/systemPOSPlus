@@ -40,6 +40,29 @@ export function DashboardClient({ stats }: { stats: any }) {
     const displayLabel = selectedDateData ? `${selectedDateData.date}` : t.today || "Today"
     const isToday = !selectedDateData || selectedDateData.date === todayData.date
 
+    // Percentage Logic
+    const currentIndex = chartData.findIndex((d: any) => d.date === (selectedDateData?.date || todayData.date))
+    const prevData = currentIndex > 0 ? chartData[currentIndex - 1] : null
+
+    let percentageChange = 0
+    let percentageLabel = t.no_data || "No Data"
+
+    if (prevData) {
+        const currentTotal = displaySales
+        const prevTotal = prevData.total
+
+        if (prevTotal === 0) {
+            percentageChange = currentTotal > 0 ? 100 : 0
+        } else {
+            percentageChange = ((currentTotal - prevTotal) / prevTotal) * 100
+        }
+        percentageLabel = `${percentageChange > 0 ? "+" : ""}${percentageChange.toFixed(1)}% ${t.vs_yesterday || "vs previous day"}`
+    } else {
+        percentageLabel = t.no_prior_data || "No prior data"
+    }
+
+    const percentageColor = percentageChange > 0 ? "text-emerald-600" : percentageChange < 0 ? "text-red-600" : "text-muted-foreground"
+
     // --- ALERTS LOGIC START ---
     // 1. Calculate Critical vs Warning items for the Alert Card summary
     const criticalItems = (stats?.lowStockProducts || []).filter((p: any) => {
