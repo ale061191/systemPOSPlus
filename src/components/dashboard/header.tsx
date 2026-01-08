@@ -72,12 +72,12 @@ export function Header({ role }: { role?: string }) {
                 {/* Euro Rate Display */}
                 <Button
                     variant="outline"
-                    className="gap-2 h-9 px-3 cursor-default hover:bg-background"
+                    className="gap-2 h-9 px-3 cursor-default border-emerald-500/60 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 transition-all"
                 >
                     <Euro className="h-4 w-4" />
                     <span className="font-semibold text-xs">EUR</span>
                     {euroRate > 0 && (
-                        <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-gray-300 dark:border-white/20">
+                        <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-emerald-500/30">
                             ~{euroRate.toFixed(2)}
                         </span>
                     )}
