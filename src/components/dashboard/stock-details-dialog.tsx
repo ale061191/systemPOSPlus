@@ -51,16 +51,20 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
         const status = getSingleStatus(current, initial)
         const pct = (current / (initial || 1)) * 100
 
-        let className = "text-[10px] h-5 px-1 justify-between w-full "
+        let className = "text-[10px] h-6 px-2 w-full grid grid-cols-[auto_1fr] items-center gap-2 "
         if (status === 'critical') className += "bg-red-100 text-red-800 border-red-200"
         else if (status === 'warning') className += "bg-yellow-100 text-yellow-800 border-yellow-200"
         else className += "bg-emerald-100 text-emerald-800 border-emerald-200"
 
         return (
             <Badge variant="outline" className={className}>
-                <span className="mr-1">{t.store}:</span>
-                <span className="font-bold">{current}</span>
-                {pct < 100 && <span className="ml-1 opacity-80 text-[9px]">({Math.round(pct)}%)</span>}
+                <div className="flex items-center gap-1">
+                    <span className="font-semibold">{t.store}:</span>
+                </div>
+                <div className="flex items-center justification-end text-right ml-auto">
+                    <span className="font-bold mr-1">{current}</span>
+                    {pct < 100 && <span className="opacity-80 text-[9px]">({Math.round(pct)}%)</span>}
+                </div>
             </Badge>
         )
     }
@@ -71,16 +75,20 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
         const status = getSingleStatus(current, initial)
         const pct = (current / (initial || 1)) * 100
 
-        let className = "text-[10px] h-5 px-1 "
+        let className = "text-[10px] h-6 px-2 w-full grid grid-cols-[auto_1fr] items-center gap-2 "
         if (status === 'critical') className += "bg-red-100 text-red-800 border-red-200"
         else if (status === 'warning') className += "bg-yellow-100 text-yellow-800 border-yellow-200"
         else className += "bg-emerald-100 text-emerald-800 border-emerald-200"
 
         return (
             <Badge variant="outline" className={className}>
-                <span className="mr-1">{t.whse}:</span>
-                <span className="font-bold">{current}</span>
-                {pct < 100 && <span className="ml-1 opacity-80 text-[9px]">({Math.round(pct)}%)</span>}
+                <div className="flex items-center gap-1">
+                    <span className="font-semibold">{t.whse}:</span>
+                </div>
+                <div className="flex items-center justification-end text-right ml-auto">
+                    <span className="font-bold mr-1">{current}</span>
+                    {pct < 100 && <span className="opacity-80 text-[9px]">({Math.round(pct)}%)</span>}
+                </div>
             </Badge>
         )
     }
@@ -160,7 +168,7 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                 <p className="text-xs text-muted-foreground">{formatCurrency(entry.product.price || entry.product.selling_price)}</p>
                             </div>
                         </div>
-                        <div className="text-right flex flex-col gap-1 min-w-[100px]">
+                        <div className="text-right flex flex-col gap-1 min-w-[140px]">
                             {entry.type === 'combined' && (
                                 <>
                                     {renderStoreBadge(entry.product)}
