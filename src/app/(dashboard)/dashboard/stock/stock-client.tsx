@@ -227,26 +227,14 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                                         <div className="flex flex-col items-center">
                                             <span className="font-bold text-lg">{p.stock}</span>
                                             {(() => {
-                                                const initial = p.initial_stock || p.stock || 1 // Fallback to avoid div by 0
+                                                const initial = p.initial_stock || p.stock || 1
                                                 const percentage = (p.stock / initial) * 100
-                                                let variant: "default" | "secondary" | "destructive" | "outline" = "outline"
                                                 let label = t.good
 
-                                                if (p.stock === 0) {
-                                                    variant = "destructive"
-                                                    label = t.empty
-                                                } else if (percentage <= 20) {
-                                                    variant = "destructive"
-                                                    label = t.critical // You might need to add this key to dictionary or re-use 'empty'/'low'
-                                                } else if (percentage <= 50) {
-                                                    variant = "secondary" // Yellow-ish usually
-                                                    label = t.low
-                                                } else {
-                                                    variant = "outline" // Green/Good
-                                                    label = t.good
-                                                }
+                                                if (p.stock === 0) label = t.empty
+                                                else if (percentage <= 20) label = t.critical
+                                                else if (percentage <= 50) label = t.low
 
-                                                // Custom styles for colors if variants don't match exactly
                                                 let className = "text-[10px] h-5 px-1 "
                                                 if (percentage > 50) className += "bg-emerald-100 text-emerald-800 border-emerald-200"
                                                 else if (percentage > 20) className += "bg-yellow-100 text-yellow-800 border-yellow-200"
@@ -263,7 +251,28 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
 
                                     <TableCell className="text-center">
                                         <div className="flex flex-col items-center justify-center">
-                                            <span className="font-bold text-lg text-muted-foreground">{p.stock_warehouse || 0}</span>
+                                            <span className="font-bold text-lg">{p.stock_warehouse || 0}</span>
+                                            {(() => {
+                                                const current = p.stock_warehouse || 0
+                                                const initial = p.initial_stock_warehouse || current || 1
+                                                const percentage = (current / initial) * 100
+                                                let label = t.good
+
+                                                if (current === 0) label = t.empty
+                                                else if (percentage <= 20) label = t.critical
+                                                else if (percentage <= 50) label = t.low
+
+                                                let className = "text-[10px] h-5 px-1 "
+                                                if (percentage > 50) className += "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                                else if (percentage > 20) className += "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                else className += "bg-red-100 text-red-800 border-red-200"
+
+                                                return (
+                                                    <Badge variant="outline" className={className}>
+                                                        {label} {percentage < 100 && `(${Math.round(percentage)}%)`}
+                                                    </Badge>
+                                                )
+                                            })()}
                                         </div>
                                     </TableCell>
 

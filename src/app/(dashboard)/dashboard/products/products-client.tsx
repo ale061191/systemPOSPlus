@@ -273,14 +273,55 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                                     </TableCell>
                                     <TableCell>{formatCurrency(p.price)}</TableCell>
                                     <TableCell className="text-center">
-                                        <Badge variant={p.stock > 10 ? "secondary" : "destructive"}>
-                                            {p.stock}
-                                        </Badge>
+                                        <div className="flex flex-col items-center">
+                                            <span className="font-bold text-lg">{p.stock}</span>
+                                            {(() => {
+                                                const initial = p.initial_stock || p.stock || 1
+                                                const percentage = (p.stock / initial) * 100
+                                                let label = t.good
+
+                                                if (p.stock === 0) label = t.empty
+                                                else if (percentage <= 20) label = t.critical
+                                                else if (percentage <= 50) label = t.low
+
+                                                let className = "text-[10px] h-5 px-1 "
+                                                if (percentage > 50) className += "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                                else if (percentage > 20) className += "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                else className += "bg-red-100 text-red-800 border-red-200"
+
+                                                return (
+                                                    <Badge variant="outline" className={className}>
+                                                        {label} {percentage < 100 && `(${Math.round(percentage)}%)`}
+                                                    </Badge>
+                                                )
+                                            })()}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-center">
-                                        <span className="text-muted-foreground font-medium">
-                                            {p.stock_warehouse || 0}
-                                        </span>
+                                        <div className="flex flex-col items-center justify-center">
+                                            <span className="font-bold text-lg">{p.stock_warehouse || 0}</span>
+                                            {(() => {
+                                                const current = p.stock_warehouse || 0
+                                                const initial = p.initial_stock_warehouse || current || 1
+                                                const percentage = (current / initial) * 100
+                                                let label = t.good
+
+                                                if (current === 0) label = t.empty
+                                                else if (percentage <= 20) label = t.critical
+                                                else if (percentage <= 50) label = t.low
+
+                                                let className = "text-[10px] h-5 px-1 "
+                                                if (percentage > 50) className += "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                                else if (percentage > 20) className += "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                else className += "bg-red-100 text-red-800 border-red-200"
+
+                                                return (
+                                                    <Badge variant="outline" className={className}>
+                                                        {label} {percentage < 100 && `(${Math.round(percentage)}%)`}
+                                                    </Badge>
+                                                )
+                                            })()}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
