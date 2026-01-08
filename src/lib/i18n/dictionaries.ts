@@ -262,6 +262,9 @@ export const dictionaries = {
         interface_language: "Idioma de la Interfaz",
         receipt_footer: "Pie de Página del Recibo",
         receipt_footer_placeholder: "¡Gracias por su visita!",
+        vs_yesterday: "vs día anterior",
+        no_data: "Sin datos",
+        no_prior_data: "Sin datos previos",
     },
     en: {
         dashboard: "Dashboard",
@@ -523,5 +526,8 @@ export const dictionaries = {
         interface_language: "Interface Language",
         receipt_footer: "Receipt Footer",
         receipt_footer_placeholder: "Thank you for visiting!",
+        vs_yesterday: "vs previous day",
+        no_data: "No Data",
+        no_prior_data: "No prior data",
     }
 }
