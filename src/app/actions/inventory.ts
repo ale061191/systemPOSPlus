@@ -152,6 +152,8 @@ export async function createProduct(formData: FormData) {
             category_id: category_id === "none" ? null : category_id,
             stock, // Store Stock
             stock_warehouse, // Warehouse Stock
+            initial_stock: stock, // Set baseline for store
+            initial_stock_warehouse: stock_warehouse, // Set baseline for warehouse
             image_url,
             available: true
         })
@@ -217,12 +219,16 @@ export async function updateProduct(formData: FormData) {
             }
         }
 
+        // When updating via this form, we assume the user is "resetting" or "correcting" the stock levels,
+        // so we update the initial_stock baseline to match the new values.
         const { error } = await adminDb.from("products").update({
             name,
             price,
             category_id: category_id === "none" ? null : category_id,
             stock,
             stock_warehouse,
+            initial_stock: stock, // Reset baseline
+            initial_stock_warehouse: stock_warehouse, // Reset baseline
             image_url,
         }).eq("id", id)
 

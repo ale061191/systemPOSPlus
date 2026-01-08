@@ -28,15 +28,40 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
     const { formatCurrency } = useCurrency()
 
     // 1. Filter Logic
-    const criticalItems = lowStockProducts.filter(p => p.stock <= 20)
-    const warningItems = lowStockProducts.filter(p => p.stock > 20 && p.stock <= 40)
-    // const healthyCount = Math.max(0, totalProductsCount - lowStockProducts.length)
-    // We now have the actual list!
-    const healthyItems = healthyProducts || []
-    const healthyCount = healthyItems.length
+    const getStatus = (stock: number, initial: number) => {
+        if (stock === 0) return "critical"
+        const max = initial || stock || 1
+        const pct = (stock / max) * 100
+        if (pct <= 20) return "critical"
+        if (pct <= 50) return "warning"
+        return "healthy"
+    }
+
+    const criticalItems = lowStockProducts.filter(p => getStatus(p.stock, p.initial_stock) === "critical")
+    const warningItems = lowStockProducts.filter(p => getStatus(p.stock, p.initial_stock) === "warning")
+    // For healthy items, we should ideally check ALL products, but passing them might be expensive if list is huge.
+    // However, the prop name is 'healthyProducts' which implies it already contains the healthy ones?
+    // Wait, the parent component filters 'lowStockProducts' and passes 'healthyProducts'.
+    // If the parent logic (server side?) still uses old logic, this component receives wrong buckets?
+    // Let's check where 'lowStockProducts' comes from. It's likely passed from a Server Component Page.
+    // If so, I need to find the CALLER of this component to fix the server-side filtering too!
+
+    // Assuming for now we re-filter the TOTAL list if possible, or just re-classify what we are given.
+    // If 'lowStockProducts' + 'healthyProducts' = All Products, we can concatenate and re-filter.
+
+    const allProducts = [...lowStockProducts, ...healthyProducts]
+    const newCriticalItems = allProducts.filter(p => getStatus(p.stock, p.initial_stock) === "critical")
+    const newWarningItems = allProducts.filter(p => getStatus(p.stock, p.initial_stock) === "warning")
+    const newHealthyItems = allProducts.filter(p => getStatus(p.stock, p.initial_stock) === "healthy")
+
+    // Update variables to use the new filtered lists
+    const finalCritical = newCriticalItems
+    const finalWarning = newWarningItems
+    const finalHealthy = newHealthyItems
+
 
     // 2. Determine default tab (Prioritize worst status)
-    const defaultTab = criticalItems.length > 0 ? "critical" : (warningItems.length > 0 ? "warning" : "healthy")
+    const defaultTab = finalCritical.length > 0 ? "critical" : (finalWarning.length > 0 ? "warning" : "healthy")
 
     return (
         <Dialog>
@@ -55,29 +80,29 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="critical" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
                             <AlertOctagon className="mr-2 h-4 w-4" />
-                            {t.critical} ({criticalItems.length})
+                            {t.critical} ({finalCritical.length})
                         </TabsTrigger>
                         <TabsTrigger value="warning" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
                             <AlertTriangle className="mr-2 h-4 w-4" />
-                            {t.warning} ({warningItems.length})
+                            {t.warning} ({finalWarning.length})
                         </TabsTrigger>
                         <TabsTrigger value="healthy" className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-700">
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            {t.healthy} ({healthyCount})
+                            {t.healthy} ({finalHealthy.length})
                         </TabsTrigger>
                     </TabsList>
 
                     {/* CRITICAL TAB */}
                     <TabsContent value="critical">
                         <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                            {criticalItems.length === 0 ? (
+                            {finalCritical.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                     <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
                                     <p>{t.no_critical_items}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {criticalItems.map((product) => (
+                                    {finalCritical.map((product: any) => (
                                         <div key={product.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
@@ -110,14 +135,14 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                     {/* WARNING TAB */}
                     <TabsContent value="warning">
                         <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                            {warningItems.length === 0 ? (
+                            {finalWarning.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                     <CheckCircle className="h-10 w-10 mb-2 text-emerald-500" />
                                     <p>{t.no_warning_items}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {warningItems.map((product) => (
+                                    {finalWarning.map((product: any) => (
                                         <div key={product.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
@@ -150,14 +175,14 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                     {/* HEALTHY TAB */}
                     <TabsContent value="healthy">
                         <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                            {healthyItems.length === 0 ? (
+                            {finalHealthy.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                     <AlertTriangle className="h-10 w-10 mb-2 text-yellow-500" />
                                     <p>{t.no_healthy_items}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {healthyItems.map((product) => (
+                                    {finalHealthy.map((product: any) => (
                                         <div key={product.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center overflow-hidden border">
