@@ -219,16 +219,32 @@ export async function updateProduct(formData: FormData) {
             }
         }
 
-        // When updating via this form, we assume the user is "resetting" or "correcting" the stock levels,
-        // so we update the initial_stock baseline to match the new values.
+        // Fetch existing product to check current initial_stock stats
+        const { data: existingProduct, error: fetchError } = await adminDb
+            .from("products")
+            .select("initial_stock, initial_stock_warehouse")
+            .eq("id", id)
+            .single()
+
+        if (fetchError) throw fetchError
+
+        // High-water mark logic:
+        // Only increase the baseline if the new stock is higher than what we've seen before.
+        // Also handle cases where initial_stock might be 0 (from fresh migration of empty items).
+        const currentInitialStock = existingProduct.initial_stock || 0
+        const currentInitialWarehouse = existingProduct.initial_stock_warehouse || 0
+
+        const newInitialStock = stock > currentInitialStock ? stock : currentInitialStock
+        const newInitialWarehouse = stock_warehouse > currentInitialWarehouse ? stock_warehouse : currentInitialWarehouse
+
         const { error } = await adminDb.from("products").update({
             name,
             price,
             category_id: category_id === "none" ? null : category_id,
             stock,
             stock_warehouse,
-            initial_stock: stock, // Reset baseline
-            initial_stock_warehouse: stock_warehouse, // Reset baseline
+            initial_stock: newInitialStock,
+            initial_stock_warehouse: newInitialWarehouse,
             image_url,
         }).eq("id", id)
 
@@ -283,7 +299,7 @@ export async function updateStock(formData: FormData) {
         // 1. Get current product to check stock
         const { data: product, error: fetchError } = await adminDb
             .from("products")
-            .select("stock, stock_warehouse")
+            .select("stock, stock_warehouse, initial_stock, initial_stock_warehouse")
             .eq("id", productId)
             .single()
 
@@ -294,12 +310,26 @@ export async function updateStock(formData: FormData) {
         let newStockWarehouse = product.stock_warehouse
         const qtyAdjustment = type === "OUT" ? -quantity : quantity
 
+        // High-water mark calculation variables
+        let newInitialStock = product.initial_stock || 0
+        let newInitialWarehouse = product.initial_stock_warehouse || 0
+
         if (target === "store") {
             newStockStore += qtyAdjustment
             if (newStockStore < 0) return { error: "Insufficient Store Stock" }
+
+            // If strictly adding stock, check if we breach the high-water mark
+            if (newStockStore > newInitialStock) {
+                newInitialStock = newStockStore
+            }
         } else {
             newStockWarehouse += qtyAdjustment
             if (newStockWarehouse < 0) return { error: "Insufficient Warehouse Stock" }
+
+            // If strictly adding stock, check if we breach the high-water mark
+            if (newStockWarehouse > newInitialWarehouse) {
+                newInitialWarehouse = newStockWarehouse
+            }
         }
 
         // 3. Update Product
@@ -307,7 +337,9 @@ export async function updateStock(formData: FormData) {
             .from("products")
             .update({
                 stock: newStockStore,
-                stock_warehouse: newStockWarehouse
+                stock_warehouse: newStockWarehouse,
+                initial_stock: newInitialStock,
+                initial_stock_warehouse: newInitialWarehouse
             })
             .eq("id", productId)
 

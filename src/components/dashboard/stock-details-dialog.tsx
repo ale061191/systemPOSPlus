@@ -9,6 +9,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { AlertOctagon, AlertTriangle, CheckCircle, Package } from "lucide-react"
@@ -118,12 +119,46 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
                                                 </div>
                                             </div>
                                             <div className="text-right flex flex-col gap-1">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 border border-red-200">
-                                                    {t.store}: {product.stock}
-                                                </span>
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                                                    {t.whse}: {product.stock_warehouse || 0}
-                                                </span>
+                                                {/* Store Stock Badge */}
+                                                {(() => {
+                                                    const initial = product.initial_stock || product.stock || 1
+                                                    const percentage = (product.stock / initial) * 100
+                                                    let className = "text-[10px] h-5 px-1 justify-between w-full " // added justify-between for better spacing if needed, though formatting is strict
+
+                                                    if (product.stock === 0) className += "bg-red-100 text-red-800 border-red-200"
+                                                    else if (percentage <= 20) className += "bg-red-100 text-red-800 border-red-200"
+                                                    else if (percentage <= 50) className += "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                    else className += "bg-emerald-100 text-emerald-800 border-emerald-200"
+
+                                                    return (
+                                                        <Badge variant="outline" className={className}>
+                                                            <span className="mr-1">{t.store}:</span>
+                                                            <span className="font-bold">{product.stock}</span>
+                                                            {percentage < 100 && <span className="ml-1 opacity-80 text-[9px]">({Math.round(percentage)}%)</span>}
+                                                        </Badge>
+                                                    )
+                                                })()}
+
+                                                {/* Warehouse Stock Badge */}
+                                                {(() => {
+                                                    const current = product.stock_warehouse || 0
+                                                    const initial = product.initial_stock_warehouse || current || 1
+                                                    const percentage = (current / initial) * 100
+                                                    let className = "text-[10px] h-5 px-1 "
+
+                                                    if (current === 0) className += "bg-red-100 text-red-800 border-red-200"
+                                                    else if (percentage <= 20) className += "bg-red-100 text-red-800 border-red-200"
+                                                    else if (percentage <= 50) className += "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                                    else className += "bg-emerald-100 text-emerald-800 border-emerald-200"
+
+                                                    return (
+                                                        <Badge variant="outline" className={className}>
+                                                            <span className="mr-1">{t.whse}:</span>
+                                                            <span className="font-bold">{current}</span>
+                                                            {percentage < 100 && <span className="ml-1 opacity-80 text-[9px]">({Math.round(percentage)}%)</span>}
+                                                        </Badge>
+                                                    )
+                                                })()}
                                             </div>
                                         </div>
                                     ))}
