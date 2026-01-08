@@ -29,12 +29,25 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
     const { formatCurrency } = useCurrency()
 
     // 1. Filter Logic
-    const getStatus = (stock: number, initial: number) => {
-        if (stock === 0) return "critical"
-        const max = initial || stock || 1
-        const pct = (stock / max) * 100
+    const getSingleStatus = (current: number, initial: number) => {
+        if (current === 0) return "critical"
+        const max = initial || current || 1
+        const pct = (current / max) * 100
         if (pct <= 20) return "critical"
         if (pct <= 50) return "warning"
+        return "healthy"
+    }
+
+    const getProductStatus = (product: any) => {
+        // Evaluate Store Status
+        const storeStatus = getSingleStatus(product.stock, product.initial_stock || product.stock)
+
+        // Evaluate Warehouse Status
+        const whseStatus = getSingleStatus(product.stock_warehouse || 0, product.initial_stock_warehouse || product.stock_warehouse || 0)
+
+        // Return the "worst" status
+        if (storeStatus === "critical" || whseStatus === "critical") return "critical"
+        if (storeStatus === "warning" || whseStatus === "warning") return "warning"
         return "healthy"
     }
 
@@ -85,30 +98,18 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
         )
     }
 
-    const criticalItems = lowStockProducts.filter(p => getStatus(p.stock, p.initial_stock) === "critical")
-    const warningItems = lowStockProducts.filter(p => getStatus(p.stock, p.initial_stock) === "warning")
-    // For healthy items, we should ideally check ALL products, but passing them might be expensive if list is huge.
-    // However, the prop name is 'healthyProducts' which implies it already contains the healthy ones?
-    // Wait, the parent component filters 'lowStockProducts' and passes 'healthyProducts'.
-    // If the parent logic (server side?) still uses old logic, this component receives wrong buckets?
-    // Let's check where 'lowStockProducts' comes from. It's likely passed from a Server Component Page.
-    // If so, I need to find the CALLER of this component to fix the server-side filtering too!
-
-    // Assuming for now we re-filter the TOTAL list if possible, or just re-classify what we are given.
-    // If 'lowStockProducts' + 'healthyProducts' = All Products, we can concatenate and re-filter.
-
+    // Combine all products to re-filter based on strict client side logic
+    // This handles the case where server-side logic might be outdated or less strict
     const allProducts = [...lowStockProducts, ...healthyProducts]
-    const newCriticalItems = allProducts.filter(p => getStatus(p.stock, p.initial_stock) === "critical")
-    const newWarningItems = allProducts.filter(p => getStatus(p.stock, p.initial_stock) === "warning")
-    const newHealthyItems = allProducts.filter(p => getStatus(p.stock, p.initial_stock) === "healthy")
 
-    // Update variables to use the new filtered lists
-    const finalCritical = newCriticalItems
-    const finalWarning = newWarningItems
-    const finalHealthy = newHealthyItems
+    // De-duplicate products just in case (though highly unlikely from server)
+    const uniqueProducts = Array.from(new Map(allProducts.map(item => [item.id, item])).values())
 
+    const finalCritical = uniqueProducts.filter(p => getProductStatus(p) === "critical")
+    const finalWarning = uniqueProducts.filter(p => getProductStatus(p) === "warning")
+    const finalHealthy = uniqueProducts.filter(p => getProductStatus(p) === "healthy")
 
-    // 2. Determine default tab (Prioritize worst status)
+    // Determine default tab (Prioritize worst status)
     const defaultTab = finalCritical.length > 0 ? "critical" : (finalWarning.length > 0 ? "warning" : "healthy")
 
     return (
