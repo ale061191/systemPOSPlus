@@ -8,6 +8,7 @@ import { useLanguage } from "@/providers/language-provider"
 
 interface OverviewChartProps {
     data: { name: string; total: number; date?: string }[]
+    onDataSelect?: (data: any) => void
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -35,7 +36,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null
 }
 
-export function OverviewChart({ data }: OverviewChartProps) {
+export function OverviewChart({ data, onDataSelect }: OverviewChartProps) {
     const { t } = useLanguage()
     return (
         <Card className="col-span-4 transition-all hover:shadow-md">
@@ -53,7 +54,15 @@ export function OverviewChart({ data }: OverviewChartProps) {
             <CardContent className="pl-2">
                 <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data}>
+                        <AreaChart
+                            data={data}
+                            onClick={(data: any) => {
+                                if (onDataSelect && data?.activePayload?.[0]?.payload) {
+                                    onDataSelect(data.activePayload[0].payload)
+                                }
+                            }}
+                            className="cursor-pointer"
+                        >
                             <defs>
                                 <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />

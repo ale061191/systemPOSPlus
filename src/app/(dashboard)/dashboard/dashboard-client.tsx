@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -25,6 +27,18 @@ export function DashboardClient({ stats }: { stats: any }) {
     const recentOrders = stats?.recentOrders || []
     const totalSales = stats?.totalSales || 0
     const totalOrders = stats?.totalOrders || 0
+
+    // --- DYNAMIC SALES STATE ---
+    // Find today's data (last one in the array usually, but let's be safe)
+    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const todayData = chartData.find((d: any) => d.date === todayStr) || chartData[chartData.length - 1] || { total: 0, date: todayStr }
+
+    const [selectedDateData, setSelectedDateData] = useState<any>(null)
+
+    // Display Logic
+    const displaySales = selectedDateData ? selectedDateData.total : todayData.total
+    const displayLabel = selectedDateData ? `${selectedDateData.date}` : t.today || "Today"
+    const isToday = !selectedDateData || selectedDateData.date === todayData.date
 
     // --- ALERTS LOGIC START ---
     // 1. Calculate Critical vs Warning items for the Alert Card summary
@@ -67,16 +81,24 @@ export function DashboardClient({ stats }: { stats: any }) {
             {/* STATS CARDS */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Total Sales */}
-                <Card className="cursor-pointer hover:shadow-md transition-all">
+                {/* Total Sales (DYNAMIC) */}
+                <Card
+                    className={`cursor-pointer transition-all hover:shadow-md ${!isToday ? 'border-violet-500/50 bg-violet-50/10' : ''}`}
+                    onClick={() => setSelectedDateData(null)} // Click to reset
+                >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t.total_sales}</CardTitle>
+                        <CardTitle className="text-sm font-medium">
+                            {isToday ? t.total_sales : displayLabel}
+                        </CardTitle>
                         <div className="h-8 w-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
                             <DollarSign className="h-4 w-4" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(totalSales)}</div>
-                        <p className="text-xs text-muted-foreground">+20.1% {t.from_last_month}</p>
+                        <div className="text-2xl font-bold">{formatCurrency(displaySales)}</div>
+                        <p className="text-xs text-muted-foreground">
+                            {isToday ? `+20.1% ${t.from_last_month}` : t.selected_date || "Selected Date"}
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -180,7 +202,10 @@ export function DashboardClient({ stats }: { stats: any }) {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
 
                 {/* CHART SECTION (Now Client Component) */}
-                <OverviewChart data={chartData} />
+                <OverviewChart
+                    data={chartData}
+                    onDataSelect={(data) => setSelectedDateData(data)}
+                />
 
                 <Card className="col-span-3">
                     <CardHeader>
