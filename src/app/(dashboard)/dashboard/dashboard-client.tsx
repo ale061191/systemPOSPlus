@@ -26,6 +26,38 @@ export function DashboardClient({ stats }: { stats: any }) {
     const totalSales = stats?.totalSales || 0
     const totalOrders = stats?.totalOrders || 0
 
+    // --- ALERTS LOGIC START ---
+    // 1. Calculate Critical vs Warning items for the Alert Card summary
+    const criticalItems = (stats?.lowStockProducts || []).filter((p: any) => {
+        const sInit = p.initial_stock || p.stock || 1
+        const wInit = p.initial_stock_warehouse || p.stock_warehouse || 1
+        return ((p.stock / sInit) * 100 <= 20) || ((p.stock_warehouse / wInit) * 100 <= 20)
+    })
+    const criticalCount = criticalItems.length
+    const warningCount = (stats?.lowStockProducts?.length || 0) - criticalCount
+
+    const hasCritical = criticalCount > 0
+    const hasWarning = warningCount > 0
+    const hasAlerts = hasCritical || hasWarning
+
+    // 2. Helper to determine display for a single row in the card
+    const getRowAlertDisplay = (p: any) => {
+        const sInit = p.initial_stock || p.stock || 1
+        const wInit = p.initial_stock_warehouse || p.stock_warehouse || 1
+
+        const sPct = (p.stock / sInit) * 100
+        const wPct = (p.stock_warehouse / wInit) * 100
+
+        // Prioritize showing Critical
+        if (wPct <= 20) return { val: p.stock_warehouse, label: `(${t.whse})`, color: "text-red-600", dot: "bg-red-500" }
+        if (sPct <= 20) return { val: p.stock, label: "", color: "text-red-600", dot: "bg-red-500" }
+
+        // Then Warning
+        if (wPct <= 50) return { val: p.stock_warehouse, label: `(${t.whse})`, color: "text-orange-600", dot: "bg-orange-500" }
+        return { val: p.stock, label: "", color: "text-orange-600", dot: "bg-orange-500" }
+    }
+    // --- ALERTS LOGIC END ---
+
     return (
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -78,106 +110,70 @@ export function DashboardClient({ stats }: { stats: any }) {
 
                 {/* Low Stock Alerts (Replaces Reservations) */}
                 {/* Low Stock Alerts (Traffic Light System) */}
+                {/* Low Stock Alerts (Traffic Light System) */}
                 <StockDetailsDialog
                     lowStockProducts={stats?.lowStockProducts || []}
                     healthyProducts={stats?.healthyProducts || []}
                     totalProductsCount={stats?.totalProductsCount || 0}
                 >
-                    {(() => {
-                        // 1. Calculate Counts
-                        const criticalItems = (stats?.lowStockProducts || []).filter((p: any) => {
-                            const sInit = p.initial_stock || p.stock || 1
-                            const wInit = p.initial_stock_warehouse || p.stock_warehouse || 1
-                            return ((p.stock / sInit) * 100 <= 20) || ((p.stock_warehouse / wInit) * 100 <= 20)
-                        })
-                        const criticalCount = criticalItems.length
-                        const warningCount = (stats?.lowStockProducts?.length || 0) - criticalCount
-
-                        const hasCritical = criticalCount > 0
-                        const hasWarning = warningCount > 0
-                        const hasAlerts = hasCritical || hasWarning
-
-                        // 2. Helper to determine display for a single row
-                        const getRowDisplay = (p: any) => {
-                            const sInit = p.initial_stock || p.stock || 1
-                            const wInit = p.initial_stock_warehouse || p.stock_warehouse || 1
-
-                            const sPct = (p.stock / sInit) * 100
-                            const wPct = (p.stock_warehouse / wInit) * 100
-
-                            // Prioritize showing Critical
-                            if (wPct <= 20) return { val: p.stock_warehouse, label: `(${t.whse})`, color: "text-red-600", dot: "bg-red-500" }
-                            if (sPct <= 20) return { val: p.stock, label: "", color: "text-red-600", dot: "bg-red-500" }
-
-                            // Then Warning
-                            if (wPct <= 50) return { val: p.stock_warehouse, label: `(${t.whse})`, color: "text-orange-600", dot: "bg-orange-500" }
-                            return { val: p.stock, label: "", color: "text-orange-600", dot: "bg-orange-500" }
-                        }
-
-                        return (
-                            <>
-                                {/* Header Logic */}
-                                <div className={`cursor-pointer hover:shadow-md transition-all rounded-lg border bg-card text-card-foreground shadow-sm ${hasCritical ? "border-red-500/50 bg-red-50/10" :
-                                        hasWarning ? "border-orange-500/50 bg-orange-50/10" :
-                                            "border-emerald-500/50 bg-emerald-50/10"
-                                    }`}>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <div>
-                                            <CardTitle className="text-sm font-medium">{t.low_stock}</CardTitle>
-                                            {hasAlerts && (
-                                                <div className="flex gap-2 text-[10px] mt-1 font-semibold">
-                                                    {criticalCount > 0 && <span className="text-red-600">{criticalCount} {t.critical}</span>}
-                                                    {warningCount > 0 && <span className="text-orange-600">{warningCount} {t.warning}</span>}
+                    <div className={`cursor-pointer hover:shadow-md transition-all rounded-lg border bg-card text-card-foreground shadow-sm ${hasCritical ? "border-red-500/50 bg-red-50/10" :
+                        hasWarning ? "border-orange-500/50 bg-orange-50/10" :
+                            "border-emerald-500/50 bg-emerald-50/10"
+                        }`}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <div>
+                                <CardTitle className="text-sm font-medium">{t.low_stock}</CardTitle>
+                                {hasAlerts && (
+                                    <div className="flex gap-2 text-[10px] mt-1 font-semibold">
+                                        {criticalCount > 0 && <span className="text-red-600">{criticalCount} {t.critical}</span>}
+                                        {warningCount > 0 && <span className="text-orange-600">{warningCount} {t.warning}</span>}
+                                    </div>
+                                )}
+                            </div>
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center ${hasCritical ? "bg-red-100 text-red-600" :
+                                hasWarning ? "bg-orange-100 text-orange-600" :
+                                    "bg-emerald-100 text-emerald-600"
+                                }`}>
+                                {hasCritical ? <AlertOctagon className="h-4 w-4" /> :
+                                    hasWarning ? <AlertTriangle className="h-4 w-4" /> :
+                                        <CheckCircle className="h-4 w-4" />}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                {hasAlerts ? (
+                                    <>
+                                        {(stats?.lowStockProducts || []).slice(0, 3).map((product: any) => {
+                                            const disp = getRowAlertDisplay(product)
+                                            return (
+                                                <div key={product.id} className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={`h-2 w-2 rounded-full ${disp.dot}`} />
+                                                        <span className="font-medium truncate max-w-[120px]" title={product.name}>
+                                                            {product.name}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`font-bold text-xs ${disp.color}`}>
+                                                        {disp.val} {disp.label}
+                                                    </span>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${hasCritical ? "bg-red-100 text-red-600" :
-                                                hasWarning ? "bg-orange-100 text-orange-600" :
-                                                    "bg-emerald-100 text-emerald-600"
-                                            }`}>
-                                            {hasCritical ? <AlertOctagon className="h-4 w-4" /> :
-                                                hasWarning ? <AlertTriangle className="h-4 w-4" /> :
-                                                    <CheckCircle className="h-4 w-4" />}
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-2">
-                                            {hasAlerts ? (
-                                                <>
-                                                    {(stats?.lowStockProducts || []).slice(0, 3).map((product: any) => {
-                                                        const disp = getRowDisplay(product)
-                                                        return (
-                                                            <div key={product.id} className="flex items-center justify-between text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`h-2 w-2 rounded-full ${disp.dot}`} />
-                                                                    <span className="font-medium truncate max-w-[120px]" title={product.name}>
-                                                                        {product.name}
-                                                                    </span>
-                                                                </div>
-                                                                <span className={`font-bold text-xs ${disp.color}`}>
-                                                                    {disp.val} {disp.label}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    })}
-                                                    {(stats?.lowStockProducts?.length || 0) > 3 && (
-                                                        <p className="text-xs text-center text-muted-foreground pt-1">
-                                                            + {(stats?.lowStockProducts?.length || 0) - 3} {t.more_items}
-                                                        </p>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-2 text-emerald-600">
-                                                    <span className="text-2xl font-bold">{t.ok}</span>
-                                                    <p className="text-xs text-muted-foreground">{t.inventory_healthy}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </div>
-                            </>
-                        )
-                    })()}
+                                            )
+                                        })}
+                                        {(stats?.lowStockProducts?.length || 0) > 3 && (
+                                            <p className="text-xs text-center text-muted-foreground pt-1">
+                                                + {(stats?.lowStockProducts?.length || 0) - 3} {t.more_items}
+                                            </p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-2 text-emerald-600">
+                                        <span className="text-2xl font-bold">{t.ok}</span>
+                                        <p className="text-xs text-muted-foreground">{t.inventory_healthy}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </div>
                 </StockDetailsDialog>
             </div>
 
