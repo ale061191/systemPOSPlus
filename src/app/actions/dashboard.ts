@@ -112,20 +112,38 @@ export async function getDashboardStats() {
                 const safeProds = allProducts || []
                 totalProductsCount = safeProds.length
 
-                // Use robust JavaScript filtering
+                // Use robust JavaScript filtering with Percentage Logic
+                // Critical: <= 20%, Warning: <= 50%
+                // We consider a product "Low Stock" if EITHER Store OR Warehouse is <= 50%
                 lowStockProducts = safeProds.filter((p: any) => {
-                    const stockVal = Number(p.stock)
-                    // Logic: Warning is <= 40
-                    return !isNaN(stockVal) && stockVal <= 40
-                }).sort((a: any, b: any) => Number(a.stock) - Number(b.stock))
+                    const storeInitial = p.initial_stock || p.stock || 1
+                    const storePct = (Number(p.stock) / storeInitial) * 100
 
-                // Also send HEALTHY products for the dialog list
-                healthyProducts = safeProds.filter((p: any) => {
-                    const stockVal = Number(p.stock)
-                    return !isNaN(stockVal) && stockVal > 40
-                }).sort((a: any, b: any) => Number(b.stock) - Number(a.stock)) // Descending stock for healthy
+                    const whseInitial = p.initial_stock_warehouse || p.stock_warehouse || 1
+                    const whsePct = (Number(p.stock_warehouse) / whseInitial) * 100
 
-                // console.log(`Debug Stock: Found ${lowStockProducts.length} low stock items out of ${totalProductsCount}`)
+                    // Include if either is in Warning (<=50%) or Critical (<=20%) range
+                    return (storePct <= 50) || (whsePct <= 50)
+                }).sort((a: any, b: any) => {
+                    // Sort order: Critical first, then Warning.
+                    // Lower percentage gets higher priority. 
+                    // We calculate the "worst" percentage for each product to sort.
+                    const aStorePct = (Number(a.stock) / (a.initial_stock || a.stock || 1))
+                    const aWhsePct = (Number(a.stock_warehouse) / (a.initial_stock_warehouse || a.stock_warehouse || 1))
+                    const aMin = Math.min(aStorePct, aWhsePct)
+
+                    const bStorePct = (Number(b.stock) / (b.initial_stock || b.stock || 1))
+                    const bWhsePct = (Number(b.stock_warehouse) / (b.initial_stock_warehouse || b.stock_warehouse || 1))
+                    const bMin = Math.min(bStorePct, bWhsePct)
+
+                    return aMin - bMin
+                })
+
+                // Healthy products are those that are NOT in the low stock list
+                // (i.e. both Store and Warehouse > 50%)
+                const lowStockIds = new Set(lowStockProducts.map(p => p.id))
+                healthyProducts = safeProds.filter((p: any) => !lowStockIds.has(p.id))
+                    .sort((a: any, b: any) => Number(b.stock) - Number(a.stock))
             }
         } catch (prodErr) {
             console.error("Dashboard: Products Exception", prodErr)
