@@ -32,19 +32,33 @@ export async function getDashboardStats() {
                 totalOrders = safeOrders.length
 
                 // 3. Chart Data (Calculated from orders)
-                const chartDataMap = new Map<string, number>()
                 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
                 const today = new Date()
+
+                // Initialize last 7 days
+                const chartDataArray: any[] = []
                 for (let i = 6; i >= 0; i--) {
                     const d = new Date(today)
                     d.setDate(d.getDate() - i)
-                    chartDataMap.set(days[d.getDay()], 0)
+                    chartDataArray.push({
+                        name: days[d.getDay()],
+                        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), // e.g. "Jan 7, 2026"
+                        rawDate: d.toISOString().split('T')[0], // YYYY-MM-DD for matching
+                        total: 0
+                    })
                 }
+
+                // Fill with data
                 safeOrders.forEach(order => {
-                    const dayName = days[new Date(order.created_at).getDay()]
-                    if (chartDataMap.has(dayName)) chartDataMap.set(dayName, (chartDataMap.get(dayName) || 0) + Number(order.total_amount))
+                    const orderDate = order.created_at.split('T')[0] // YYYY-MM-DD
+                    const dayEntry = chartDataArray.find(d => d.rawDate === orderDate)
+                    if (dayEntry) {
+                        dayEntry.total += Number(order.total_amount)
+                    }
                 })
-                chartData = Array.from(chartDataMap).map(([name, total]) => ({ name, total }))
+
+                // Clean up rawDate before sending if desired, but keeping it is harmless
+                chartData = chartDataArray
             }
         } catch (err) {
             console.error("Dashboard: Orders Exception", err)

@@ -7,13 +7,38 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'rec
 import { useLanguage } from "@/providers/language-provider"
 
 interface OverviewChartProps {
-    data: { name: string; total: number }[]
+    data: { name: string; total: number; date?: string }[]
+}
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col">
+                        <span className="text-[0.70rem] uppercase text-muted-foreground">
+                            {payload[0].payload.date || label}
+                        </span>
+                        <span className="font-bold text-muted-foreground">
+                            {label}
+                        </span>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-1 mt-2">
+                    <span className="font-bold text-violet-600">
+                        ${payload[0].value.toFixed(2)}
+                    </span>
+                </div>
+            </div>
+        )
+    }
+    return null
 }
 
 export function OverviewChart({ data }: OverviewChartProps) {
     const { t } = useLanguage()
     return (
-        <Card className="col-span-4">
+        <Card className="col-span-4 transition-all hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{t.sales_overview}</CardTitle>
                 <Select defaultValue="week">
@@ -49,8 +74,16 @@ export function OverviewChart({ data }: OverviewChartProps) {
                                 axisLine={false}
                                 tickFormatter={(value) => `$${value}`}
                             />
-                            <Tooltip />
-                            <Area type="monotone" dataKey="total" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorTotal)" />
+                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                            <Area
+                                type="monotone"
+                                dataKey="total"
+                                stroke="#8b5cf6"
+                                strokeWidth={2}
+                                fillOpacity={1}
+                                fill="url(#colorTotal)"
+                                activeDot={{ r: 6, className: "fill-violet-600" }}
+                            />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
