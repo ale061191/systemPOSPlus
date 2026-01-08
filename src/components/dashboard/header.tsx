@@ -20,16 +20,21 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getStoreSettings } from "@/app/actions/settings"
+import { getExpiringProducts } from "@/app/actions/inventory"
 import { useCurrency } from "@/providers/currency-provider"
+import { useLanguage } from "@/providers/language-provider"
 import { Badge } from "@/components/ui/badge"
 
 export function Header({ role }: { role?: string }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
     const router = useRouter()
+    const { t } = useLanguage()
 
     // Global Currency Context
     const { currency, exchangeRate, euroRate, toggleCurrency } = useCurrency()
+
+    const [alerts, setAlerts] = useState<any[]>([])
 
     useEffect(() => {
         async function loadLogo() {
@@ -38,7 +43,14 @@ export function Header({ role }: { role?: string }) {
                 setLogoUrl(settings.logo_url)
             }
         }
+        async function loadAlerts() {
+            const products = await getExpiringProducts()
+            if (Array.isArray(products)) {
+                setAlerts(products)
+            }
+        }
         loadLogo()
+        loadAlerts()
     }, [])
 
     async function handleLogout() {
@@ -99,10 +111,45 @@ export function Header({ role }: { role?: string }) {
                 </Button>
 
                 <DateTimeDisplay />
-                <Button variant="ghost" size="icon" className="text-muted-foreground">
-                    <Bell className="h-5 w-5" />
-                    <span className="sr-only">Notifications</span>
-                </Button>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+                            <Bell className="h-5 w-5" />
+                            {alerts.length > 0 && (
+                                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 ring-2 ring-white dark:ring-slate-950" />
+                            )}
+                            <span className="sr-only">Notifications</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80">
+                        <DropdownMenuLabel>{t.expiry_alerts} ({alerts.length})</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {alerts.length === 0 ? (
+                                <div className="p-4 text-center text-sm text-muted-foreground">
+                                    {t.no_alerts_yet}
+                                </div>
+                            ) : (
+                                alerts.map(p => (
+                                    <DropdownMenuItem key={p.id} className="flex flex-col items-start gap-1 p-3 cursor-default focus:bg-muted">
+                                        <div className="flex items-center gap-2 w-full">
+                                            <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="font-medium truncate text-sm">{p.name}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between w-full pl-4">
+                                            <p className="text-xs text-red-600 font-medium">
+                                                {t.expires}: {new Date(p.expiry_date).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </DropdownMenuItem>
+                                ))
+                            )}
+                        </div>
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 <Button variant="ghost" size="icon" className="text-muted-foreground">
                     <Moon className="h-5 w-5" />
                     <span className="sr-only">Toggle theme</span>

@@ -21,13 +21,33 @@ function getAdminDb() {
 
 export async function getStaffUsers() {
     const supabaseAdmin = getAdminDb()
-    const { data, error } = await supabaseAdmin
+
+    // 1. Get all profiles
+    const { data: profiles, error: profileError } = await supabaseAdmin
         .from("profiles")
         .select("*")
-    // .order("created_at", { ascending: false })
 
-    if (error) throw error
-    return data
+    if (profileError) throw profileError
+
+    // 2. Get all auth users to get their emails
+    const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+
+    if (authError) {
+        console.error("Auth list users error:", authError)
+        // If auth fetch fails, just return profiles without email to avoid crashing the page
+        return profiles
+    }
+
+    // 3. Merge email and created_at into profiles
+    return profiles.map(profile => {
+        const authUser = users.find(u => u.id === profile.id)
+        return {
+            ...profile,
+            email: authUser?.email || "",
+            // Profile table doesn't have created_at, so we take it from Auth
+            created_at: authUser?.created_at || profile.updated_at
+        }
+    })
 }
 
 export async function createStaffUser(formData: FormData) {

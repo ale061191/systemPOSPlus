@@ -27,6 +27,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogDescription,
 } from "@/components/ui/dialog"
 import {
     Select,
@@ -92,9 +93,17 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault()
+        console.log("handleSubmit triggered") // Debug log
+
         setIsLoading(true)
         const formData = new FormData(event.currentTarget)
         const imageFile = formData.get("image") as File
+
+        console.log("Form data collected", {
+            name: formData.get("name"),
+            price: formData.get("price"),
+            imageFile: imageFile ? `${imageFile.name} (${imageFile.size})` : "No image"
+        }) // Debug log
 
         // Client-Side Upload Logic
         if (imageFile && imageFile.size > 0) {
@@ -126,15 +135,22 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
             }
         }
 
-        const result = editingProduct
-            ? await updateProduct(formData)
-            : await createProduct(formData)
+        try {
+            const result = editingProduct
+                ? await updateProduct(formData)
+                : await createProduct(formData)
 
-        setIsLoading(false)
-        if (result.error) {
-            alert("Error: " + result.error)
-        } else {
-            setIsOpen(false)
+            setIsLoading(false)
+            if (result.error) {
+                console.error("Server Action Result Error:", result.error)
+                alert("Error: " + result.error)
+            } else {
+                setIsOpen(false)
+            }
+        } catch (err: any) {
+            console.error("Detailed Submit Error:", err)
+            setIsLoading(false)
+            alert("Unexpected error: " + err.message)
         }
     }
 
@@ -163,6 +179,9 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{editingProduct ? t.edit_product : t.add_product}</DialogTitle>
+                            <DialogDescription>
+                                {editingProduct ? "Modifica los detalles del producto." : "Ingresa los detalles del nuevo producto."}
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="grid gap-4 py-4" key={editingProduct?.id || 'new'}>
                             <input type="hidden" name="id" value={editingProduct?.id || ""} />
@@ -204,13 +223,27 @@ export function ProductsClient({ initialProducts, categories }: { initialProduct
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="expiry_date">{t.expiry_date || "Fecha de Vencimiento"}</Label>
+                                <Input
+                                    id="expiry_date"
+                                    name="expiry_date"
+                                    type="date"
+                                    defaultValue={editingProduct?.expiry_date ? editingProduct.expiry_date.split('T')[0] : ""}
+                                />
+                            </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="image">{t.image}</Label>
                                 <Input id="image" name="image" type="file" accept="image/*" className="cursor-pointer" />
                             </div>
 
-                            <Button type="submit" className="mt-4 bg-emerald-600" disabled={isLoading}>
+                            <Button
+                                type="submit"
+                                className="mt-4 bg-emerald-600"
+                                disabled={isLoading}
+                                onClick={() => console.log("Submit Button Clicked! isLoading:", isLoading)}
+                            >
                                 {t.save}
                             </Button>
                         </form>

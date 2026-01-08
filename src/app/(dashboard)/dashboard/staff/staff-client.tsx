@@ -155,6 +155,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                         <TableHeader>
                             <TableRow>
                                 <TableHead>{t.name}</TableHead>
+                                <TableHead>{t.email}</TableHead>
                                 <TableHead>{t.role}</TableHead>
                                 <TableHead>{t.date}</TableHead>
                                 <TableHead className="text-right">{t.actions}</TableHead>
@@ -163,7 +164,7 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                         <TableBody>
                             {initialStaff.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                                         {t.no_staff_found}
                                     </TableCell>
                                 </TableRow>
@@ -179,6 +180,9 @@ export function StaffClient({ initialStaff, currentUserRole }: { initialStaff: a
                                                 {staff.full_name ? staff.full_name.substring(0, 2).toUpperCase() : '??'}
                                             </div>
                                             {staff.full_name || t.unknown}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            {staff.email}
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant={staff.role === 'admin' ? "destructive" : "secondary"}>

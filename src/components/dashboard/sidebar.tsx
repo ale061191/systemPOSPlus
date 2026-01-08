@@ -46,7 +46,17 @@ export function Sidebar({ role = "cashier", className, onNavigate }: { role?: st
             return false
         }
 
-        // Cashiers only see specific items
+        // Explicitly hide Dashboard (Main Panel) for non-admins
+        if (item.href === "/dashboard" && role !== "admin") {
+            return false
+        }
+
+        // Explicitly hide Reports for non-admins village
+        if (item.href === "/dashboard/reports" && role !== "admin") {
+            return false
+        }
+
+        // Cashiers only see specific items village
         if (role === "cashier") {
             const allowed = ["/dashboard", "/dashboard/pos", "/dashboard/orders", "/dashboard/reservation", "/dashboard/customers", "/dashboard/reports"]
             return allowed.includes(item.href)

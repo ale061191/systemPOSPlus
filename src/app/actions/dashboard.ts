@@ -10,11 +10,12 @@ export async function getDashboardStats() {
     let totalOrders = 0
     let recentOrders: any[] = []
     let chartData: any[] = []
-    let topSelling: any[] = []
+    let topSelling: any = { day: [], week: [], month: [] }
     let cancelledCount = 0
     let lowStockProducts: any[] = []
     let healthyProducts: any[] = []
     let totalProductsCount = 0
+    const today = new Date()
 
     try {
         // 1. Total Sales & Count
@@ -33,7 +34,6 @@ export async function getDashboardStats() {
 
                 // 3. Chart Data (Calculated from orders)
                 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-                const today = new Date()
 
                 // Initialize last 7 days
                 const chartDataArray: any[] = []
@@ -44,33 +44,39 @@ export async function getDashboardStats() {
                         name: days[d.getDay()],
                         date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), // e.g. "Jan 7, 2026"
                         rawDate: d.toISOString().split('T')[0], // YYYY-MM-DD for matching
-                        total: 0
+                        total: 0,
+                        ordersCount: 0,
+                        cancelledCount: 0
                     })
                 }
 
-                // Fill with data
+                // Fill with data by iterating COMPLETED orders
                 safeOrders.forEach(order => {
                     const orderDate = order.created_at.split('T')[0] // YYYY-MM-DD
                     const dayEntry = chartDataArray.find(d => d.rawDate === orderDate)
                     if (dayEntry) {
                         dayEntry.total += Number(order.total_amount)
+                        dayEntry.ordersCount += 1
                     }
                 })
 
-                // Clean up rawDate before sending if desired, but keeping it is harmless
                 chartData = chartDataArray
             }
         } catch (err) {
             console.error("Dashboard: Orders Exception", err)
         }
 
-        // 2. Recent Orders
+        // 2. Recent Orders (Last 7 Days to match chart)
         try {
+            const startDate = new Date(today)
+            startDate.setDate(startDate.getDate() - 6)
+            const startDateStr = startDate.toISOString().split('T')[0]
+
             const { data: recent, error: recentError } = await supabase
                 .from("orders")
                 .select("*, customers(full_name)")
+                .gte("created_at", `${startDateStr}T00:00:00`)
                 .order("created_at", { ascending: false })
-                .limit(50)
 
             if (recentError) console.error("Dashboard: Recent Orders Error", JSON.stringify(recentError, null, 2))
             else recentOrders = recent || []
@@ -78,36 +84,77 @@ export async function getDashboardStats() {
             console.error("Dashboard: Recent Orders Exception", err)
         }
 
-        // 4. Top Selling
+        // 4. Top Selling Logic
         try {
+            // Fetch items from the last 30 days
+            const monthAgo = new Date(today)
+            monthAgo.setDate(monthAgo.getDate() - 30)
+
             const { data: items, error: itemsError } = await supabase
                 .from("order_items")
-                .select("quantity, unit_price, products ( name, image_url )")
+                .select("quantity, product_id, products(name, price, image_url), orders!inner(created_at, status)")
+                .eq("orders.status", "COMPLETED")
+                .gte("orders.created_at", monthAgo.toISOString())
 
-            if (itemsError) console.error("Dashboard: Items Error", JSON.stringify(itemsError, null, 2))
-            else if (items) {
-                const stats = new Map<string, any>()
-                items.forEach((item: any) => {
-                    if (!item.products) return
-                    const key = item.products.name
-                    const s = stats.get(key) || { name: key, image: item.products.image_url, count: 0, revenue: 0 }
-                    s.count += item.quantity
-                    s.revenue += (item.quantity * item.unit_price)
-                    stats.set(key, s)
-                })
-                topSelling = Array.from(stats.values()).sort((a, b) => b.count - a.count).slice(0, 5)
+            if (itemsError) {
+                console.error("Dashboard: Top Selling Error", itemsError)
+            } else {
+                const safeItems = items || []
+
+                const aggregate = (filterFn: (item: any) => boolean) => {
+                    const counts: Record<string, any> = {}
+                    safeItems.filter(filterFn).forEach((item: any) => {
+                        const pid = item.product_id
+                        if (!counts[pid]) {
+                            counts[pid] = {
+                                product_id: pid,
+                                name: item.products?.name,
+                                image: item.products?.image_url,
+                                count: 0,
+                                revenue: 0
+                            }
+                        }
+                        counts[pid].count += item.quantity
+                        counts[pid].revenue += Number(item.quantity) * Number(item.products?.price || 0)
+                    })
+                    return Object.values(counts)
+                        .sort((a: any, b: any) => b.count - a.count)
+                        .slice(0, 5)
+                }
+
+                const todayStr = today.toISOString().split('T')[0]
+                const weekAgo = new Date(today)
+                weekAgo.setDate(weekAgo.getDate() - 7)
+
+                topSelling = {
+                    day: aggregate((i: any) => i.orders.created_at.startsWith(todayStr)),
+                    week: aggregate((i: any) => new Date(i.orders.created_at) >= weekAgo),
+                    month: aggregate(() => true) // Already filtered to 30 days
+                }
             }
         } catch (err) {
             console.error("Dashboard: Top Selling Exception", err)
         }
 
-        // 5. Cancelled
+        // 5. Cancelled (Modified to fetch data for chart distribution)
         try {
-            const { count: cncl, error: cnclError } = await supabase
+            const { data: cancelledOrders, error: cnclError } = await supabase
                 .from("orders")
-                .select("*", { count: 'exact', head: true })
+                .select("created_at")
                 .eq("status", "CANCELLED")
-            if (!cnclError) cancelledCount = cncl || 0
+
+            if (!cnclError && cancelledOrders) {
+                cancelledCount = cancelledOrders.length
+
+                // Distribute cancelled count to chartData
+                cancelledOrders.forEach(order => {
+                    const orderDate = order.created_at.split('T')[0]
+                    const dayEntry = chartData.find(d => d.rawDate === orderDate)
+                    if (dayEntry) {
+                        dayEntry.cancelledCount += 1
+                    }
+                })
+            }
         } catch (err) {
             console.error("Dashboard: Cancelled Exception", err)
         }

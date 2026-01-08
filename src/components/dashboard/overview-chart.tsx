@@ -56,9 +56,16 @@ export function OverviewChart({ data, onDataSelect }: OverviewChartProps) {
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
                             data={data}
-                            onClick={(data: any) => {
-                                if (onDataSelect && data?.activePayload?.[0]?.payload) {
-                                    onDataSelect(data.activePayload[0].payload)
+                            onClick={(event: any) => {
+                                // Try getting payload directly
+                                if (event?.activePayload?.[0]?.payload) {
+                                    if (onDataSelect) onDataSelect(event.activePayload[0].payload)
+                                    return
+                                }
+
+                                // Fallback: Use tooltip index if available
+                                if (event?.activeTooltipIndex !== undefined && data[event.activeTooltipIndex]) {
+                                    if (onDataSelect) onDataSelect(data[event.activeTooltipIndex])
                                 }
                             }}
                             className="cursor-pointer"

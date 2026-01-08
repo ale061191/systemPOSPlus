@@ -12,6 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DollarSign, ShoppingCart, RefreshCcw, CalendarCheck, AlertTriangle, AlertOctagon, CheckCircle } from "lucide-react"
 import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { useLanguage } from "@/providers/language-provider"
@@ -29,39 +30,59 @@ export function DashboardClient({ stats }: { stats: any }) {
     const totalOrders = stats?.totalOrders || 0
 
     // --- DYNAMIC SALES STATE ---
-    // Find today's data (last one in the array usually, but let's be safe)
-    const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    const todayData = chartData.find((d: any) => d.date === todayStr) || chartData[chartData.length - 1] || { total: 0, date: todayStr }
+    // Find today's data using ISO date (YYYY-MM-DD) for robustness
+    const todayRaw = new Date().toISOString().split('T')[0]
+    // Fallback to last entry if exact match not found (e.g. timezone diffs)
+    const todayData = chartData.find((d: any) => d.rawDate === todayRaw) || chartData[chartData.length - 1] || { total: 0, date: todayRaw, rawDate: todayRaw }
 
     const [selectedDateData, setSelectedDateData] = useState<any>(null)
+
+    // Debugging interaction
+    const handleDateSelect = (data: any) => {
+        setSelectedDateData(data)
+    }
 
     // Display Logic
     const displaySales = selectedDateData ? selectedDateData.total : todayData.total
     const displayLabel = selectedDateData ? `${selectedDateData.date}` : t.today || "Today"
-    const isToday = !selectedDateData || selectedDateData.date === todayData.date
+    const isToday = !selectedDateData || selectedDateData.rawDate === todayData.rawDate
 
-    // Percentage Logic
-    const currentIndex = chartData.findIndex((d: any) => d.date === (selectedDateData?.date || todayData.date))
-    const prevData = currentIndex > 0 ? chartData[currentIndex - 1] : null
+    // Percentage Logic Helper
+    const calculateGrowth = (metricKey: string, invertColor: boolean = false) => {
+        // Match by rawDate
+        const targetRaw = selectedDateData?.rawDate || todayData.rawDate
+        const currentIndex = chartData.findIndex((d: any) => d.rawDate === targetRaw)
+        const prevData = currentIndex > 0 ? chartData[currentIndex - 1] : null
 
-    let percentageChange = 0
-    let percentageLabel = t.no_data || "No Data"
+        const currentVal = selectedDateData ? selectedDateData[metricKey] : todayData[metricKey]
 
-    if (prevData) {
-        const currentTotal = displaySales
-        const prevTotal = prevData.total
+        let change = 0
+        let label = t.no_data || "No Data"
+        let color = "text-muted-foreground"
 
-        if (prevTotal === 0) {
-            percentageChange = currentTotal > 0 ? 100 : 0
+        if (prevData) {
+            const prevVal = prevData[metricKey] || 0
+
+            if (prevVal === 0) {
+                change = currentVal > 0 ? 100 : 0
+            } else {
+                change = ((currentVal - prevVal) / prevVal) * 100
+            }
+
+            label = `${change > 0 ? "+" : ""}${change.toFixed(1)}% ${t.vs_yesterday || "vs previous day"}`
+
+            if (change > 0) color = invertColor ? "text-red-600" : "text-emerald-600"
+            else if (change < 0) color = invertColor ? "text-emerald-600" : "text-red-600"
         } else {
-            percentageChange = ((currentTotal - prevTotal) / prevTotal) * 100
+            label = t.no_prior_data || "No prior data"
         }
-        percentageLabel = `${percentageChange > 0 ? "+" : ""}${percentageChange.toFixed(1)}% ${t.vs_yesterday || "vs previous day"}`
-    } else {
-        percentageLabel = t.no_prior_data || "No prior data"
+
+        return { val: currentVal, label, color }
     }
 
-    const percentageColor = percentageChange > 0 ? "text-emerald-600" : percentageChange < 0 ? "text-red-600" : "text-muted-foreground"
+    const salesStats = calculateGrowth('total', false)
+    const ordersStats = calculateGrowth('ordersCount', false)
+    const returnsStats = calculateGrowth('cancelledCount', true) // Invert: Less returns is better (green)
 
     // --- ALERTS LOGIC START ---
     // 1. Calculate Critical vs Warning items for the Alert Card summary
@@ -95,6 +116,18 @@ export function DashboardClient({ stats }: { stats: any }) {
     }
     // --- ALERTS LOGIC END ---
 
+
+    // --- RECENT ORDERS LOGIC ---
+    const targetDateStr = selectedDateData ? selectedDateData.rawDate : todayData.rawDate // YYYY-MM-DD
+
+    // Fallback: If for some reason rawDate is missing from todayData (e.g. init), calculate it
+    const safeTargetDateStr = targetDateStr || new Date().toISOString().split('T')[0]
+
+    const filteredOrders = recentOrders.filter((order: any) => {
+        if (!order.created_at) return false
+        return order.created_at.startsWith(safeTargetDateStr)
+    })
+
     return (
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -118,15 +151,17 @@ export function DashboardClient({ stats }: { stats: any }) {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(displaySales)}</div>
-                        <p className={`text-xs ${percentageColor}`}>
-                            {percentageLabel}
+                        <div className="text-2xl font-bold">{formatCurrency(salesStats.val)}</div>
+                        <p className={`text-xs ${salesStats.color}`}>
+                            {salesStats.label}
                         </p>
                     </CardContent>
                 </Card>
 
                 {/* Total Orders */}
-                <Card>
+                <Card
+                    className={`transition-all hover:shadow-md ${!isToday ? 'border-violet-500/50 bg-violet-50/10' : ''}`}
+                >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t.total_orders}</CardTitle>
                         <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
@@ -134,13 +169,17 @@ export function DashboardClient({ stats }: { stats: any }) {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{totalOrders}</div>
-                        <p className="text-xs text-muted-foreground">+180.1% {t.from_last_month}</p>
+                        <div className="text-2xl font-bold">{ordersStats.val}</div>
+                        <p className={`text-xs ${ordersStats.color}`}>
+                            {ordersStats.label}
+                        </p>
                     </CardContent>
                 </Card>
 
                 {/* Sales Return (Dynamically Linked) */}
-                <Card>
+                <Card
+                    className={`transition-all hover:shadow-md ${!isToday ? 'border-violet-500/50 bg-violet-50/10' : ''}`}
+                >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{t.sales_return}</CardTitle>
                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
@@ -148,8 +187,10 @@ export function DashboardClient({ stats }: { stats: any }) {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.cancelledCount || 0}</div>
-                        <p className="text-xs text-muted-foreground">{t.sales_return}</p>
+                        <div className="text-2xl font-bold">{returnsStats.val}</div>
+                        <p className={`text-xs ${returnsStats.color}`}>
+                            {returnsStats.label}
+                        </p>
                     </CardContent>
                 </Card>
 
@@ -227,7 +268,7 @@ export function DashboardClient({ stats }: { stats: any }) {
                 {/* CHART SECTION (Now Client Component) */}
                 <OverviewChart
                     data={chartData}
-                    onDataSelect={(data) => setSelectedDateData(data)}
+                    onDataSelect={handleDateSelect}
                 />
 
                 <Card className="col-span-3">
@@ -235,32 +276,43 @@ export function DashboardClient({ stats }: { stats: any }) {
                         <CardTitle>{t.top_selling}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {stats?.topSelling?.length === 0 ? (
-                                <p className="text-sm text-muted-foreground text-center py-8">{t.no_sales_yet}</p>
-                            ) : (
-                                stats?.topSelling?.map((product: any, idx: number) => (
-                                    <div key={idx} className="flex items-center">
-                                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
-                                            {product.image ? (
-                                                <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                                            ) : (
-                                                <span className="text-xs font-bold">{product.name.charAt(0)}</span>
-                                            )}
-                                        </div>
-                                        <div className="ml-4 space-y-1">
-                                            <p className="text-sm font-medium leading-none">{product.name}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {product.count} {t.sales_count}
-                                            </p>
-                                        </div>
-                                        <div className="ml-auto font-medium text-sm">
-                                            +{formatCurrency(product.revenue)}
-                                        </div>
+                        <Tabs defaultValue="day" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 mb-4">
+                                <TabsTrigger value="day">Día</TabsTrigger>
+                                <TabsTrigger value="week">Semana</TabsTrigger>
+                                <TabsTrigger value="month">Mes</TabsTrigger>
+                            </TabsList>
+                            {["day", "week", "month"].map((period) => (
+                                <TabsContent key={period} value={period}>
+                                    <div className="space-y-4">
+                                        {!stats?.topSelling?.[period] || stats.topSelling[period].length === 0 ? (
+                                            <p className="text-sm text-muted-foreground text-center py-8">{t.no_sales_yet}</p>
+                                        ) : (
+                                            stats.topSelling[period].map((product: any, idx: number) => (
+                                                <div key={idx} className="flex items-center">
+                                                    <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center overflow-hidden border">
+                                                        {product.image ? (
+                                                            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                                                        ) : (
+                                                            <span className="text-xs font-bold">{product.name?.charAt(0)}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="ml-4 space-y-1">
+                                                        <p className="text-sm font-medium leading-none">{product.name}</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {product.count} {t.sales_count}
+                                                        </p>
+                                                    </div>
+                                                    <div className="ml-auto font-medium text-sm">
+                                                        +{formatCurrency(product.revenue)}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
-                                ))
-                            )}
-                        </div>
+                                </TabsContent>
+                            ))}
+                        </Tabs>
                     </CardContent>
                 </Card>
             </div>
@@ -268,13 +320,14 @@ export function DashboardClient({ stats }: { stats: any }) {
             {/* RECENT ORDERS TABLE */}
             <Card>
                 <CardHeader>
-                    <CardTitle>{t.recent_orders}</CardTitle>
+                    <CardTitle>{t.recent_orders} {safeTargetDateStr ? `(${safeTargetDateStr})` : ''}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="max-h-[400px] overflow-y-auto relative">
                         <Table>
                             <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
                                 <TableRow>
+                                    <TableHead>{t.date}</TableHead>
                                     <TableHead>{t.order_id}</TableHead>
                                     <TableHead>{t.customer}</TableHead>
                                     <TableHead>{t.type}</TableHead>
@@ -283,13 +336,18 @@ export function DashboardClient({ stats }: { stats: any }) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {recentOrders.length === 0 ? (
+                                {filteredOrders.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center h-24">{t.recent_orders} {t.error}</TableCell>
+                                        <TableCell colSpan={6} className="text-center h-24">
+                                            {t.no_orders_found || "No orders for this date"}
+                                        </TableCell>
                                     </TableRow>
                                 ) : (
-                                    recentOrders.map((order: any) => (
+                                    filteredOrders.map((order: any) => (
                                         <TableRow key={order.id}>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                                {new Date(order.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                            </TableCell>
                                             <TableCell className="font-medium">#{order.id.slice(0, 7)}</TableCell>
                                             <TableCell>{order.customers?.full_name || t.walk_in}</TableCell>
                                             <TableCell>{order.payment_method}</TableCell>

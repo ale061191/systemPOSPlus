@@ -98,24 +98,27 @@ export async function getProducts() {
 export async function createProduct(formData: FormData) {
     const supabase = await createClient()
 
-    // Verify User
-    await requireRole(["admin", "manager"])
-
-    const name = formData.get("name") as string
-    const price = parseFloat(formData.get("price") as string)
-    const category_id = formData.get("category_id") as string
-    // stock = Store Stock
-    const stock = parseInt(formData.get("stock") as string) || 0
-    // stock_warehouse = Warehouse Stock
-    const stock_warehouse = parseInt(formData.get("stock_warehouse") as string) || 0
-
-    const imageFile = formData.get("image") as File
-
-    if (!name || isNaN(price)) return { error: "Name and Price are required" }
-
-    let image_url = formData.get("image_url") as string || null
-
     try {
+        // Verify User
+        await requireRole(["admin", "manager"])
+
+        const name = formData.get("name") as string
+        const price = parseFloat(formData.get("price") as string)
+        const category_id = formData.get("category_id") as string
+        // stock = Store Stock
+        const stock = parseInt(formData.get("stock") as string) || 0
+        // stock_warehouse = Warehouse Stock
+        const stock_warehouse = parseInt(formData.get("stock_warehouse") as string) || 0
+        const expiry_date = formData.get("expiry_date") as string || null
+
+        console.log("createProduct Input:", { name, price, stock, stock_warehouse, expiry_date, image_url: formData.get("image_url") })
+
+        const imageFile = formData.get("image") as File
+
+        if (!name || isNaN(price)) return { error: "Name and Price are required" }
+
+        let image_url = formData.get("image_url") as string || null
+
         const adminDb = getAdminDb()
 
         // Handle Image Upload (Only if URL not already provided)
@@ -152,19 +155,25 @@ export async function createProduct(formData: FormData) {
             category_id: category_id === "none" ? null : category_id,
             stock, // Store Stock
             stock_warehouse, // Warehouse Stock
-            initial_stock: stock, // Set baseline for store
-            initial_stock_warehouse: stock_warehouse, // Set baseline for warehouse
             image_url,
+            expiry_date,
             available: true
         })
             .select()
+
+        if (error) {
+            console.error("Supabase Insert Error:", error)
+            return { error: error.message }
+        }
+
+        console.log("Product created successfully:", name)
 
         if (error) throw error
         revalidatePath("/dashboard/products")
         return { success: true }
     } catch (e: any) {
         console.error("Create Product Error:", e)
-        return { error: e.message }
+        return { error: e.message || "Unknown error" }
     }
 }
 
@@ -172,27 +181,28 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(formData: FormData) {
     const supabase = await createClient()
 
-    // Verify User
-    await requireRole(["admin", "manager"])
-
-    const id = formData.get("id") as string
-    const name = formData.get("name") as string
-    const price = parseFloat(formData.get("price") as string)
-    const category_id = formData.get("category_id") as string
-    const stock = parseInt(formData.get("stock") as string) || 0
-    const stock_warehouse = parseInt(formData.get("stock_warehouse") as string) || 0
-    const imageFile = formData.get("image") as File
-
-    if (!id || !name || isNaN(price)) return { error: "ID, Name and Price are required" }
-
-    // Priority: 1. New client-uploaded URL, 2. Existing URL, 3. Null
-    let image_url: string | null = formData.get("image_url") as string || null
-
-    if (!image_url) {
-        image_url = formData.get("current_image_url") as string || null
-    }
-
     try {
+        // Verify User
+        await requireRole(["admin", "manager"])
+
+        const id = formData.get("id") as string
+        const name = formData.get("name") as string
+        const price = parseFloat(formData.get("price") as string)
+        const category_id = formData.get("category_id") as string
+        const stock = parseInt(formData.get("stock") as string) || 0
+        const stock_warehouse = parseInt(formData.get("stock_warehouse") as string) || 0
+        const expiry_date = formData.get("expiry_date") as string || null
+        const imageFile = formData.get("image") as File
+
+        if (!id || !name || isNaN(price)) return { error: "ID, Name and Price are required" }
+
+        // Priority: 1. New client-uploaded URL, 2. Existing URL, 3. Null
+        let image_url: string | null = formData.get("image_url") as string || null
+
+        if (!image_url) {
+            image_url = formData.get("current_image_url") as string || null
+        }
+
         const adminDb = getAdminDb()
 
         if (!image_url && imageFile && imageFile.size > 0) {
@@ -219,23 +229,7 @@ export async function updateProduct(formData: FormData) {
             }
         }
 
-        // Fetch existing product to check current initial_stock stats
-        const { data: existingProduct, error: fetchError } = await adminDb
-            .from("products")
-            .select("initial_stock, initial_stock_warehouse")
-            .eq("id", id)
-            .single()
 
-        if (fetchError) throw fetchError
-
-        // High-water mark logic:
-        // Only increase the baseline if the new stock is higher than what we've seen before.
-        // Also handle cases where initial_stock might be 0 (from fresh migration of empty items).
-        const currentInitialStock = existingProduct.initial_stock || 0
-        const currentInitialWarehouse = existingProduct.initial_stock_warehouse || 0
-
-        const newInitialStock = stock > currentInitialStock ? stock : currentInitialStock
-        const newInitialWarehouse = stock_warehouse > currentInitialWarehouse ? stock_warehouse : currentInitialWarehouse
 
         const { error } = await adminDb.from("products").update({
             name,
@@ -243,9 +237,9 @@ export async function updateProduct(formData: FormData) {
             category_id: category_id === "none" ? null : category_id,
             stock,
             stock_warehouse,
-            initial_stock: newInitialStock,
-            initial_stock_warehouse: newInitialWarehouse,
+
             image_url,
+            expiry_date,
         }).eq("id", id)
 
         if (error) throw error
@@ -253,7 +247,7 @@ export async function updateProduct(formData: FormData) {
         return { success: true }
     } catch (e: any) {
         console.error("Update Product Error:", e)
-        return { error: e.message }
+        return { error: e.message || "Unknown error" }
     }
 }
 
@@ -417,4 +411,31 @@ export async function moveStockToStore(productId: string, quantity: number) {
     } catch (e: any) {
         return { error: e.message }
     }
+}
+
+export async function getExpiringProducts() {
+    const adminDb = getAdminDb()
+    const today = new Date()
+    const targetDate = new Date()
+    targetDate.setDate(today.getDate() + 10)
+
+    // Format as YYYY-MM-DD to avoid timezone issues with Supabase 'date' column
+    const targetDateStr = targetDate.toISOString().split('T')[0]
+
+    console.log("Checking expiring products before:", targetDateStr)
+
+    const { data, error } = await adminDb
+        .from("products")
+        .select("id, name, expiry_date, image_url, stock")
+        .not("expiry_date", "is", null)
+        .lte("expiry_date", targetDateStr)
+        .order("expiry_date", { ascending: true })
+
+    if (error) {
+        console.error("Error fetching expiring products:", error)
+        return []
+    }
+
+    console.log("Expiring products found:", data?.length)
+    return data
 }

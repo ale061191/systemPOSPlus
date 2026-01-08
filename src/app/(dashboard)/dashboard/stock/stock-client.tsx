@@ -215,6 +215,7 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                                 <TableHead>{t.product_name}</TableHead>
                                 <TableHead className="text-center">{t.store_stock}</TableHead>
                                 <TableHead className="text-center">{t.warehouse_stock}</TableHead>
+                                <TableHead className="text-center">{t.expiry_date || "Vencimiento"}</TableHead>
                                 <TableHead className="text-right">{t.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -274,6 +275,10 @@ export function StockClient({ initialProducts }: { initialProducts: any[] }) {
                                                 )
                                             })()}
                                         </div>
+                                    </TableCell>
+
+                                    <TableCell className="text-center">
+                                        {p.expiry_date ? new Date(p.expiry_date).toLocaleDateString() : "-"}
                                     </TableCell>
 
                                     <TableCell className="text-right">

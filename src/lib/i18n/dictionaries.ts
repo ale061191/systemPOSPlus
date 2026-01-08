@@ -69,6 +69,7 @@ export const dictionaries = {
         search: "Buscar",
         filter: "Filtrar",
         date: "Fecha",
+        expiry_date: "Fecha de Vencimiento",
         quantity: "Cantidad",
         price: "Precio",
         description: "Descripción",
@@ -265,6 +266,9 @@ export const dictionaries = {
         vs_yesterday: "vs día anterior",
         no_data: "Sin datos",
         no_prior_data: "Sin datos previos",
+        expiry_alerts: "Alertas de Vencimiento",
+        no_alerts_yet: "No hay alertas aún",
+        expires: "Vence",
     },
     en: {
         dashboard: "Dashboard",
@@ -334,6 +338,7 @@ export const dictionaries = {
         search: "Search",
         filter: "Filter",
         date: "Date",
+        expiry_date: "Expiration Date",
         quantity: "Quantity",
         price: "Price",
         description: "Description",
@@ -529,5 +534,8 @@ export const dictionaries = {
         vs_yesterday: "vs previous day",
         no_data: "No Data",
         no_prior_data: "No prior data",
+        expiry_alerts: "Expiration Alerts",
+        no_alerts_yet: "No alerts yet",
+        expires: "Expires",
     }
 }
