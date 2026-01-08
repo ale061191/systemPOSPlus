@@ -7,6 +7,7 @@ type Currency = "USD" | "VES"
 interface CurrencyContextType {
     currency: Currency
     exchangeRate: number
+    euroRate: number
     toggleCurrency: () => void
     formatCurrency: (amount: number) => string
     convertPrice: (amountInUsd: number) => number
@@ -17,6 +18,7 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     const [currency, setCurrency] = useState<Currency>("USD")
     const [exchangeRate, setExchangeRate] = useState<number>(1)
+    const [euroRate, setEuroRate] = useState<number>(1)
 
     const fetchRate = async () => {
         try {
@@ -25,29 +27,36 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             const res = await fetch("/api/bcv-rates")
             if (res.ok) {
                 const data = await res.json()
-                if (data && typeof data.dollar === 'number') {
-                    console.log("Rate from API:", data.dollar)
-                    setExchangeRate(data.dollar)
-                    localStorage.setItem("last_exchange_rate", data.dollar.toString())
+                if (data) {
+                    if (typeof data.dollar === 'number') {
+                        console.log("Dollar Rate from API:", data.dollar)
+                        setExchangeRate(data.dollar)
+                        localStorage.setItem("last_exchange_rate", data.dollar.toString())
+                    }
+                    if (typeof data.euro === 'number') {
+                        console.log("Euro Rate from API:", data.euro)
+                        setEuroRate(data.euro)
+                        localStorage.setItem("last_euro_rate", data.euro.toString())
+                    }
                     return
                 }
             }
 
             // Fallback: Try direct fetch if API route fails (handling CORS if possible)
+            // Note: Direct fetch to rafnixg for EUR might not work as verified, so this fallback is mostly for USD or if API recovers
             console.warn("Local API failed, trying direct fetch...")
             const directRes = await fetch("https://bcv-api.rafnixg.dev/rates/")
             if (directRes.ok) {
                 const directData = await directRes.json()
                 if (directData && typeof directData.dollar === 'number') {
-                    console.log("Rate from Direct API:", directData.dollar)
                     setExchangeRate(directData.dollar)
                     localStorage.setItem("last_exchange_rate", directData.dollar.toString())
+                    // No euro fallback here currently
                     return
                 }
             }
 
             console.warn("All fetches failed. Checking cache...")
-            // Fall through to cache check in catch block is tricky here due to scope, easier to throw
             throw new Error("All fetches failed")
         } catch (error) {
             console.error("Failed to fetch exchange rate:", error)
@@ -57,14 +66,21 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             if (cachedRate) {
                 const parsedRate = parseFloat(cachedRate)
                 if (!isNaN(parsedRate)) {
-                    console.log("Using cached rate:", parsedRate)
                     setExchangeRate(parsedRate)
-                    return
+                }
+            }
+            const cachedEuro = localStorage.getItem("last_euro_rate")
+            if (cachedEuro) {
+                const parsedEuro = parseFloat(cachedEuro)
+                if (!isNaN(parsedEuro)) {
+                    setEuroRate(parsedEuro)
                 }
             }
 
-            console.warn("No cache found, using hardcoded fallback.")
-            setExchangeRate(60)
+            if (!cachedRate) {
+                console.warn("No cache found, using hardcoded fallback.")
+                setExchangeRate(60)
+            }
         }
     }
 
@@ -95,7 +111,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <CurrencyContext.Provider value={{ currency, exchangeRate, toggleCurrency, formatCurrency, convertPrice }}>
+        <CurrencyContext.Provider value={{ currency, exchangeRate, euroRate, toggleCurrency, formatCurrency, convertPrice }}>
             {children}
         </CurrencyContext.Provider>
     )

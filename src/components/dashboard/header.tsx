@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Bell, Moon, Sun, Menu, DollarSign } from "lucide-react"
+import { Search, Bell, Moon, Sun, Menu, DollarSign, Euro } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DateTimeDisplay } from "@/components/dashboard/date-time-display"
 import { GlobalSearch } from "@/components/dashboard/global-search"
@@ -29,7 +29,7 @@ export function Header({ role }: { role?: string }) {
     const router = useRouter()
 
     // Global Currency Context
-    const { currency, exchangeRate, toggleCurrency } = useCurrency()
+    const { currency, exchangeRate, euroRate, toggleCurrency } = useCurrency()
 
     useEffect(() => {
         async function loadLogo() {
@@ -69,6 +69,20 @@ export function Header({ role }: { role?: string }) {
             </div>
 
             <div className="flex items-center gap-4">
+                {/* Euro Rate Display */}
+                <Button
+                    variant="outline"
+                    className="gap-2 h-9 px-3 cursor-default hover:bg-background"
+                >
+                    <Euro className="h-4 w-4" />
+                    <span className="font-semibold text-xs">EUR</span>
+                    {euroRate > 0 && (
+                        <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-gray-300 dark:border-white/20">
+                            ~{euroRate.toFixed(2)}
+                        </span>
+                    )}
+                </Button>
+
                 {/* Currency Toggle */}
                 <Button
                     variant={currency === "USD" ? "outline" : "default"}
