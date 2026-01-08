@@ -96,8 +96,8 @@ export function DashboardClient({ stats }: { stats: any }) {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(displaySales)}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {isToday ? `+20.1% ${t.from_last_month}` : t.selected_date || "Selected Date"}
+                        <p className={`text-xs ${percentageColor}`}>
+                            {percentageLabel}
                         </p>
                     </CardContent>
                 </Card>
