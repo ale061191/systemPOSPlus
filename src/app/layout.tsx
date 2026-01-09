@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/providers/language-provider";
 import { CartProvider } from "@/providers/cart-context";
 import { Toaster } from "@/components/ui/toaster";
 import { ConnectionIndicator } from "@/components/dashboard/connection-indicator";
+import { DeveloperCredits } from "@/components/common/developer-credits";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider>
@@ -38,6 +40,7 @@ export default function RootLayout({
               {children}
               <ConnectionIndicator />
               <Toaster />
+              <DeveloperCredits />
             </CartProvider>
           </OfflineProvider>
         </LanguageProvider>

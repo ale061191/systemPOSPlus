@@ -24,8 +24,10 @@ import { getExpiringProducts } from "@/app/actions/inventory"
 import { useCurrency } from "@/providers/currency-provider"
 import { useLanguage } from "@/providers/language-provider"
 import { Badge } from "@/components/ui/badge"
+import { useMounted } from "@/hooks/use-mounted"
 
 export function Header({ role }: { role?: string }) {
+    const isMounted = useMounted()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [logoUrl, setLogoUrl] = useState<string | null>(null)
     const router = useRouter()
@@ -34,7 +36,18 @@ export function Header({ role }: { role?: string }) {
     // Global Currency Context
     const { currency, exchangeRate, euroRate, toggleCurrency } = useCurrency()
 
+
+    // State to handle weekend visibility
+    const [shouldShowRates, setShouldShowRates] = useState(true)
+
     const [alerts, setAlerts] = useState<any[]>([])
+
+    useEffect(() => {
+        // Check if it's a weekend (Saturday = 6, Sunday = 0)
+        const day = new Date().getDay()
+        const isWeekend = day === 0 || day === 6
+        setShouldShowRates(!isWeekend)
+    }, [])
 
     useEffect(() => {
         async function loadLogo() {
@@ -81,34 +94,38 @@ export function Header({ role }: { role?: string }) {
             </div>
 
             <div className="flex items-center gap-4">
-                {/* Euro Rate Display */}
-                <Button
-                    variant="outline"
-                    className="gap-2 h-9 px-3 cursor-default border-emerald-500/60 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 transition-all"
-                >
-                    <Euro className="h-4 w-4" />
-                    <span className="font-semibold text-xs">EUR</span>
-                    {euroRate > 0 && (
-                        <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-emerald-500/30">
-                            ~{euroRate.toFixed(2)}
-                        </span>
-                    )}
-                </Button>
+                {/* Euro Rate Display - Only show on weekdays */}
+                {shouldShowRates && (
+                    <Button
+                        variant="outline"
+                        className="gap-2 h-9 px-3 cursor-default border-emerald-500/60 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 transition-all"
+                    >
+                        <Euro className="h-4 w-4" />
+                        <span className="font-semibold text-xs">EUR</span>
+                        {euroRate > 0 && (
+                            <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-emerald-500/30">
+                                ~{euroRate.toFixed(2)}
+                            </span>
+                        )}
+                    </Button>
+                )}
 
-                {/* Currency Toggle */}
-                <Button
-                    variant={currency === "USD" ? "outline" : "default"}
-                    onClick={toggleCurrency}
-                    className={`gap-2 h-9 px-3 transition-colors ${currency === "VES" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
-                >
-                    <DollarSign className="h-4 w-4" />
-                    <span className="font-semibold text-xs">{currency}</span>
-                    {currency === "VES" && exchangeRate > 0 && (
-                        <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-white/20">
-                            ~{exchangeRate.toFixed(2)}
-                        </span>
-                    )}
-                </Button>
+                {/* Currency Toggle - Only show on weekdays */}
+                {shouldShowRates && (
+                    <Button
+                        variant={currency === "USD" ? "outline" : "default"}
+                        onClick={toggleCurrency}
+                        className={`gap-2 h-9 px-3 transition-colors ${currency === "VES" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
+                    >
+                        <DollarSign className="h-4 w-4" />
+                        <span className="font-semibold text-xs">{currency}</span>
+                        {currency === "VES" && exchangeRate > 0 && (
+                            <span className="ml-1 text-[10px] opacity-80 border-l pl-2 border-white/20">
+                                ~{exchangeRate.toFixed(2)}
+                            </span>
+                        )}
+                    </Button>
+                )}
 
                 <DateTimeDisplay />
 
@@ -155,35 +172,37 @@ export function Header({ role }: { role?: string }) {
                     <span className="sr-only">Toggle theme</span>
                 </Button>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="rounded-full overflow-hidden border border-gray-200" suppressHydrationWarning>
-                            <Avatar>
-                                <AvatarImage src={logoUrl || "https://github.com/shadcn.png"} className="object-cover" />
-                                <AvatarFallback>POS</AvatarFallback>
-                            </Avatar>
-                            <span className="sr-only">Toggle user menu</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                {isMounted && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="icon" className="rounded-full overflow-hidden border border-gray-200" suppressHydrationWarning>
+                                <Avatar>
+                                    <AvatarImage src={logoUrl || "https://github.com/shadcn.png"} className="object-cover" />
+                                    <AvatarFallback>POS</AvatarFallback>
+                                </Avatar>
+                                <span className="sr-only">Toggle user menu</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
 
-                        {/* Only Admin sees Settings */}
-                        {role === 'admin' && (
-                            <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
-                                Settings
+                            {/* Only Admin sees Settings */}
+                            {role === 'admin' && (
+                                <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+                                    Settings
+                                </DropdownMenuItem>
+                            )}
+
+                            {/* Support removed as requested */}
+
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-500 cursor-pointer" onSelect={handleLogout}>
+                                Logout
                             </DropdownMenuItem>
-                        )}
-
-                        {/* Support removed as requested */}
-
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500 cursor-pointer" onSelect={handleLogout}>
-                            Logout
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </div>
         </header>
     )

@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { AlertOctagon, AlertTriangle, CheckCircle, Package, Store, Warehouse } from "lucide-react"
 import { useCurrency } from "@/providers/currency-provider"
 import { useLanguage } from "@/providers/language-provider"
+import { useMounted } from "@/hooks/use-mounted"
 
 interface StockDetailsDialogProps {
     children: React.ReactNode
@@ -33,6 +34,7 @@ interface StockEntry {
 export function StockDetailsDialog({ children, lowStockProducts, healthyProducts, totalProductsCount }: StockDetailsDialogProps) {
     const { t } = useLanguage()
     const { formatCurrency } = useCurrency()
+    const isMounted = useMounted()
 
     // 1. Status Helper
     const getSingleStatus = (current: number, initial: number) => {
@@ -189,49 +191,51 @@ export function StockDetailsDialog({ children, lowStockProducts, healthyProducts
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle>{t.stock_status_details}</DialogTitle>
-                    <DialogDescription>
-                        {t.inventory_health_overview}
-                    </DialogDescription>
-                </DialogHeader>
+            {isMounted && (
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>{t.stock_status_details}</DialogTitle>
+                        <DialogDescription>
+                            {t.inventory_health_overview}
+                        </DialogDescription>
+                    </DialogHeader>
 
-                <Tabs defaultValue={defaultTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="critical" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
-                            <AlertOctagon className="mr-2 h-4 w-4" />
-                            {t.critical} ({criticalEntries.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="warning" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
-                            <AlertTriangle className="mr-2 h-4 w-4" />
-                            {t.warning} ({warningEntries.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="healthy" className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-700">
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            {t.healthy} ({healthyEntries.length})
-                        </TabsTrigger>
-                    </TabsList>
+                    <Tabs defaultValue={defaultTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="critical" className="data-[state=active]:bg-red-100 data-[state=active]:text-red-700">
+                                <AlertOctagon className="mr-2 h-4 w-4" />
+                                {t.critical} ({criticalEntries.length})
+                            </TabsTrigger>
+                            <TabsTrigger value="warning" className="data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700">
+                                <AlertTriangle className="mr-2 h-4 w-4" />
+                                {t.warning} ({warningEntries.length})
+                            </TabsTrigger>
+                            <TabsTrigger value="healthy" className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-700">
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                {t.healthy} ({healthyEntries.length})
+                            </TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="critical">
-                        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                            {renderEntryList(criticalEntries, t.no_critical_items, "text-emerald-500")}
-                        </ScrollArea>
-                    </TabsContent>
+                        <TabsContent value="critical">
+                            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                                {renderEntryList(criticalEntries, t.no_critical_items, "text-emerald-500")}
+                            </ScrollArea>
+                        </TabsContent>
 
-                    <TabsContent value="warning">
-                        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                            {renderEntryList(warningEntries, t.no_warning_items, "text-emerald-500")}
-                        </ScrollArea>
-                    </TabsContent>
+                        <TabsContent value="warning">
+                            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                                {renderEntryList(warningEntries, t.no_warning_items, "text-emerald-500")}
+                            </ScrollArea>
+                        </TabsContent>
 
-                    <TabsContent value="healthy">
-                        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
-                            {renderEntryList(healthyEntries, t.no_healthy_items, "text-yellow-500")}
-                        </ScrollArea>
-                    </TabsContent>
-                </Tabs>
-            </DialogContent>
+                        <TabsContent value="healthy">
+                            <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                                {renderEntryList(healthyEntries, t.no_healthy_items, "text-yellow-500")}
+                            </ScrollArea>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            )}
         </Dialog>
     )
 }
